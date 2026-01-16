@@ -10,3 +10,37 @@
     --font-sans: Figtree, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 }
+
+/* Custom styles untuk sidebar alignment */
+@layer components {
+    /* Pastikan semua icon sidebar rata */
+    nav a i:first-of-type,
+    .sidebar-menu a i:first-of-type {
+        width: 1.25rem; /* 20px */
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    /* Sidebar menu transitions */
+    nav a,
+    .sidebar-menu a {
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Hover effects */
+    nav a:hover i,
+    .sidebar-menu a:hover i {
+        @apply text-blue-600;
+    }
+
+    /* Active menu state */
+    nav a.active {
+        @apply bg-blue-50 border-r-4 border-blue-600 text-blue-600;
+    }
+
+    /* Card 3D effect */
+    .card-3d {
+        transform: perspective(1000px) rotateY(-5deg);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+}
