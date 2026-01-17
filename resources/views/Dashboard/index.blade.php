@@ -13,70 +13,77 @@
             transform: perspective(1000px) rotateY(-5deg);
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
+        
+        /* Sidebar alignment fixes */
+        nav a i:first-of-type,
+        .p-6 a i:first-of-type {
+            text-align: center;
+        }
+        
+        nav a {
+            transition: all 0.2s ease;
+        }
+        
+        nav a:hover i {
+            color: #2563eb;
+        }
+        
+        .group:hover .group-hover\:text-blue-600 {
+            color: #2563eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="w-64 bg-white shadow-sm flex flex-col h-screen">
-            <!-- Logo -->
             <div class="p-6">
                 <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
                         <i class="fas fa-hospital text-white text-sm"></i>
                     </div>
                     <span class="text-xl font-bold">APOTEK SAYA</span>
                 </div>
             </div>
 
-            <!-- Navigation Menu -->
             <nav class="mt-6 flex-1">
                 <a href="#" class="flex items-center px-6 py-3 bg-blue-50 border-r-4 border-blue-600 text-blue-600">
-                    <i class="fas fa-chart-line w-5 mr-3"></i>
+                    <i class="fas fa-chart-line w-5 mr-3 shrink-0"></i>
                     <span>Dashboard</span>
                 </a>
-                
                 <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 group">
-                    <i class="fas fa-users-cog w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-users-cog w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span class="flex-1">Control User</span>
                     <i class="fas fa-chevron-right text-xs text-gray-400"></i>
                 </a>
-                
                 <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 group">
-                    <i class="fas fa-receipt w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-cash-register w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span class="flex-1">Penjualan</span>
                     <i class="fas fa-chevron-right text-xs text-gray-400"></i>
                 </a>
-                
                 <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 group">
-                    <i class="fas fa-store w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-store w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span>Marketplace</span>
                 </a>
-                
                 <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 group">
-                    <i class="fas fa-wallet w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-wallet w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span>Money</span>
                 </a>
-                
                 <a href="#" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 group">
-                    <i class="fas fa-bullhorn w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-share-nodes w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span>Social Media</span>
                 </a>
             </nav>
 
-            <!-- Bottom Menu -->
             <div class="p-6 border-t border-gray-100">
                 <a href="#" class="flex items-center py-3 text-gray-600 hover:text-gray-900 group">
-                    <i class="fas fa-cog w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-cog w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span>Settings</span>
                 </a>
-                
                 <a href="#" class="flex items-center py-3 text-gray-600 hover:text-gray-900 group">
-                    <i class="fas fa-question-circle w-5 mr-3 group-hover:text-blue-600"></i>
+                    <i class="fas fa-question-circle w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                     <span>Help Center</span>
                 </a>
-                
-                <!-- Footer Info -->
                 <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
                     <p>© FinBank, 2025</p>
                     <p>Created by Jeet Saru</p>
@@ -91,8 +98,8 @@
             <header class="bg-white shadow-sm">
                 <div class="flex items-center justify-between px-8 py-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Welcome to Dashboard Admin</h1>
-                        <p class="text-sm text-gray-500">Jangan lupa cek laporan harian kamu ya!</p>
+                        <h1 class="text-2xl font-bold text-gray-900">Welcome to FinBank</h1>
+                        <p class="text-sm text-gray-500">Hi, Bisily Gowrappdo, Welcome back!</p>
                     </div>
                     <div class="flex items-center space-x-4">
                         <button class="p-2 hover:bg-gray-100 rounded-lg">
@@ -115,7 +122,7 @@
                         <!-- Card Section -->
                         <div class="bg-white rounded-xl shadow-sm p-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h2 class="text-lg font-semibold">Laporan Penjualan</h2>
+                                <h2 class="text-lg font-semibold">Debit Card Account</h2>
                                 <button class="text-gray-400 hover:text-gray-600">
                                     <i class="fas fa-ellipsis-h"></i>
                                 </button>
