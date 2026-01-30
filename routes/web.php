@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\ProfileController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
+    // 🔽 TAMBAH DI SINI (PROFILE)
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
     // Control User
     Route::prefix('control-user')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
@@ -39,3 +43,4 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
+

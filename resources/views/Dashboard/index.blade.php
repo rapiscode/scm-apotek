@@ -9,7 +9,7 @@
         <!-- Left Column -->
         <div class="col-span-2 space-y-6">
             <!-- Card Section -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm p-6 border border-transparent dark:border-gray-800">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold">Debit Card Account</h2>
                     <button class="text-gray-400 hover:text-gray-600">
@@ -56,7 +56,7 @@
             </div>
 
             <!-- Recent Transactions -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm p-6 border border-transparent dark:border-gray-800">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold">Recent Transactions</h2>
                     <div class="flex items-center space-x-2">
@@ -101,7 +101,7 @@
             </div>
 
             <!-- Invoice Activity -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm p-6 border border-transparent dark:border-gray-800">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold">Invoice Activity</h2>
                     <div class="flex items-center space-x-2">
@@ -140,7 +140,7 @@
         <!-- Right Column -->
         <div class="space-y-6">
             <!-- Total Balance -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm p-6 border border-transparent dark:border-gray-800">
                 <h3 class="text-sm text-gray-600 mb-2">Your Total Balance</h3>
                 <h2 class="text-4xl font-bold text-gray-900 mb-1">${{ number_format($totalBalance, 2) }}</h2>
                 <p class="text-xs text-gray-500">December 31, 2025 • 10:00 PM</p>
@@ -162,7 +162,7 @@
             </div>
 
             <!-- Expenses Instead -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm p-6 border border-transparent dark:border-gray-800">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold">Expenses Instead</h3>
                     <button class="text-gray-400 hover:text-gray-600">

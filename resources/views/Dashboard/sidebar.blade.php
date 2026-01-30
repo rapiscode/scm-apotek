@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'FinBank')</title>
 
+    <script>
+        tailwind.config = {darkMode: 'class',}
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -18,11 +22,11 @@
     </style>
 </head>
 
-<body class="bg-gray-50 overflow-hidden">
+<body class="bg-gray-50 dark:bg-gray-900 overflow-hidden">
 <div class="min-h-screen">
 
     <!-- Sidebar (FIXED) -->
-    <aside class="fixed left-0 top-0 w-64 bg-white shadow-sm flex flex-col h-screen z-40">
+    <aside class="fixed left-0 top-0 w-64 bg-white dark:bg-gray-950 shadow-sm flex flex-col h-screen z-40">
         <div class="p-6">
             <div class="flex items-center space-x-2">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
@@ -96,32 +100,66 @@
     </aside>
 
     <!-- Header (FIXED, di luar main) -->
-    <header class="fixed top-0 left-64 right-0 z-30 bg-white shadow-sm border-b border-gray-100">
+    <header class="fixed top-0 left-64 right-0 z-30 bg-white dark:bg-gray-950 shadow-sm border-b border-gray-100 dark:border-gray-800">
         <div class="flex items-center justify-between px-8 py-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">@yield('page_title')</h1>
-                <p class="text-sm text-gray-500">@yield('page_subtitle')</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">@yield('page_title')</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">@yield('page_subtitle')</p>
             </div>
 
             <div class="flex items-center space-x-4">
-                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                    <i class="fas fa-moon text-gray-600"></i>
+                <button id="themeToggle"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                    <i id="themeIcon" class="fas fa-moon text-gray-600 dark:text-gray-200"></i>
                 </button>
+
                 <button class="p-2 hover:bg-gray-100 rounded-lg">
                     <i class="fas fa-bell text-gray-600"></i>
                 </button>
 
-                <img
-                    src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'User') }}&background=4F46E5&color=fff"
-                    class="w-10 h-10 rounded-full"
-                    alt="User"
-                >
+                <!-- Profile Dropdown -->
+                <div class="relative">
+                    <!-- Button avatar -->
+                    <button id="profileBtn" class="w-10 h-10 rounded-full overflow-hidden focus:outline-none">
+                        <img
+                            src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'User') }}&background=4F46E5&color=fff"
+                            class="w-10 h-10 rounded-full"
+                            alt="User"
+                        >
+                    </button>
+
+                    <!-- Dropdown menu -->
+                    <div id="profileDropdown"
+                        class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+
+                        <div class="px-4 py-3 border-b border-gray-100">
+                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name ?? 'User' }}</p>
+                            <p class="text-xs text-gray-500">{{ auth()->user()->email ?? '-' }}</p>
+                        </div>
+
+                        <a href="{{ route('profile.edit') }}"
+                        class="flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                            <i class="fa-regular fa-user"></i>
+                            Edit Profile
+                        </a>
+
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                    class="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-gray-50">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
             </div>
         </div>
     </header>
 
     <!-- Main Content (SCROLL AREA) -->
-    <main class="ml-64 pt-20 h-screen overflow-y-auto">
+    <main class="ml-64 pt-20 h-screen overflow-y-auto text-gray-900 dark:text-gray-100">
         <div class="p-8">
             @if(session('success'))
                 <div class="mb-4 rounded-lg bg-green-50 text-green-700 px-4 py-3">
@@ -140,5 +178,54 @@
     </main>
 
 </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const profileBtn = document.getElementById('profileBtn');
+            const profileDropdown = document.getElementById('profileDropdown');
+
+            if (!profileBtn || !profileDropdown) return;
+
+            profileBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function () {
+                profileDropdown.classList.add('hidden');
+            });
+
+            // biar klik di dalam dropdown gak nutup
+            profileDropdown.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const root = document.documentElement; // <html>
+            const toggle = document.getElementById('themeToggle');
+            const icon = document.getElementById('themeIcon');
+
+            // apply theme dari localStorage
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') root.classList.add('dark');
+
+            // optional: ganti icon (moon <-> sun)
+            const setIcon = () => {
+            const isDark = root.classList.contains('dark');
+            if (!icon) return;
+            icon.classList.toggle('fa-moon', !isDark);
+            icon.classList.toggle('fa-sun', isDark);
+            };
+            setIcon();
+
+            toggle?.addEventListener('click', () => {
+            root.classList.toggle('dark');
+            localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+            setIcon();
+            });
+        });
+    </script>
+
 </body>
 </html>
