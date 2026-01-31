@@ -180,52 +180,49 @@
 </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const profileBtn = document.getElementById('profileBtn');
-            const profileDropdown = document.getElementById('profileDropdown');
-
-            if (!profileBtn || !profileDropdown) return;
-
-            profileBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                profileDropdown.classList.toggle('hidden');
-            });
-
-            document.addEventListener('click', function () {
-                profileDropdown.classList.add('hidden');
-            });
-
-            // biar klik di dalam dropdown gak nutup
-            profileDropdown.addEventListener('click', function (e) {
-                e.stopPropagation();
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const root = document.documentElement; // <html>
+            const html = document.documentElement;
             const toggle = document.getElementById('themeToggle');
             const icon = document.getElementById('themeIcon');
 
-            // apply theme dari localStorage
-            const saved = localStorage.getItem('theme');
-            if (saved === 'dark') root.classList.add('dark');
+            // ===== INIT THEME =====
+            const savedTheme = localStorage.getItem('theme');
 
-            // optional: ganti icon (moon <-> sun)
-            const setIcon = () => {
-            const isDark = root.classList.contains('dark');
-            if (!icon) return;
-            icon.classList.toggle('fa-moon', !isDark);
-            icon.classList.toggle('fa-sun', isDark);
+            if (savedTheme === 'dark') {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+
+            const updateIcon = () => {
+                if (!icon) return;
+                const isDark = html.classList.contains('dark');
+                icon.className = isDark
+                    ? 'fas fa-sun text-gray-200'
+                    : 'fas fa-moon text-gray-600';
             };
-            setIcon();
+            updateIcon();
 
-            toggle?.addEventListener('click', () => {
-            root.classList.toggle('dark');
-            localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
-            setIcon();
+            // ===== TOGGLE =====
+            toggle?.addEventListener('click', function (e) {
+                e.stopPropagation();
+
+                const isDark = html.classList.contains('dark');
+
+                if (isDark) {
+                    html.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+
+                updateIcon();
             });
         });
     </script>
+
+
 
 </body>
 </html>
