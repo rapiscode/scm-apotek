@@ -91,9 +91,9 @@
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[200px]">Nama Pabrik</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[130px]">Satuan Utama</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[130px]">Semua Satuan</th>
-                                <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[160px]">Referensi Harga Beli</th>
+                                <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-40">Referensi Harga Beli</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[150px]">Harga Jual Utama</th>
-                                <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[160px]">Opsi Harga Jual</th>
+                                <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-40">Opsi Harga Jual</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[100px]">Rak</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[130px]">Stok Minimal</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[100px]">Status</th>
