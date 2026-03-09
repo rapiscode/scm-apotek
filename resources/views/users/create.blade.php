@@ -1,21 +1,21 @@
 @extends('Dashboard.sidebar')
 
-@section('title', 'FinBank - Tambah User')
+@section('title', 'APOTEK SAYA - Tambah User')
 @section('page_title', 'Tambah User')
 @section('page_subtitle', 'Buat akun pengguna baru untuk sistem.')
 
 @section('content')
     <div class="max-w-2xl">
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-800 transition-colors duration-200">
             <form method="POST" action="{{ route('users.store') }}" class="space-y-5">
                 @csrf
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nama</label>
                     <input
                         name="name"
                         value="{{ old('name') }}"
-                        class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors duration-200"
                         placeholder="Nama user"
                     >
                     @error('name')
@@ -24,11 +24,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
                     <input
                         name="email"
                         value="{{ old('email') }}"
-                        class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors duration-200"
                         placeholder="email@domain.com"
                     >
                     @error('email')
@@ -37,11 +37,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Password</label>
                     <input
                         name="password"
                         type="password"
-                        class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-colors duration-200"
                         placeholder="••••••••"
                     >
                     @error('password')
@@ -51,10 +51,10 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Role</label>
                         <select
                             name="role"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            class="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-colors duration-200"
                         >
                             @foreach($roles as $r)
                                 <option value="{{ $r }}" @selected(old('role') === $r)>
@@ -70,13 +70,13 @@
                     <div class="flex items-end">
                         <label class="inline-flex items-center gap-2 select-none">
                             <input
-                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200"
+                                class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-200 dark:focus:ring-blue-900 bg-white dark:bg-gray-900"
                                 type="checkbox"
                                 name="is_active"
                                 value="1"
                                 {{ old('is_active', '1') ? 'checked' : '' }}
                             >
-                            <span class="text-sm text-gray-700">Aktif</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-200">Aktif</span>
                         </label>
                     </div>
                 </div>
@@ -84,13 +84,13 @@
                 <div class="flex items-center gap-2 pt-2">
                     <a
                         href="{{ route('users.index') }}"
-                        class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700"
+                        class="px-4 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 transition-colors duration-200"
                     >
                         Batal
                     </a>
 
                     <button
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                         type="submit"
                     >
                         Simpan

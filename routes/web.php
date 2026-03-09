@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -22,10 +23,9 @@ Route::redirect('/', '/dashboard');
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // 🔽 TAMBAH DI SINI (PROFILE)
+    // Profile
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
@@ -35,6 +35,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [UserManagementController::class, 'create'])->name('create');
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
 
+        // Peran & Hak Akses
+        Route::get('/custom-priv', function () {
+            $roles = collect([
+                (object) ['name' => 'admin', 'is_active' => true],
+                (object) ['name' => 'user', 'is_active' => true],
+                (object) ['name' => 'kasir', 'is_active' => true],
+            ]);
+
+            return view('users.hakakses.custompriv', compact('roles'));
+        })->name('custompriv');
+
         Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
 
@@ -43,4 +54,3 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
-
