@@ -43,7 +43,7 @@
 <div class="min-h-screen">
 
     <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 w-72 bg-white dark:bg-gray-950 shadow-sm flex flex-col h-screen z-40 border-r border-gray-100 dark:border-gray-800 transition-colors duration-200">
+    <aside class="fixed left-0 top-0 w-72 bg-white dark:bg-gray-950 shadow-sm flex flex-col h-screen overflow-y-auto z-40 border-r border-gray-100 dark:border-gray-800 transition-colors duration-200">
         <div class="p-6">
             <div class="flex items-center space-x-2">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
@@ -76,7 +76,7 @@
                     id="penjualanDropdown"
                     class="hidden mt-2 ml-2 bg-gray-50 dark:bg-gray-900 rounded-2xl px-2 py-2 space-y-1 transition-colors duration-200"
                 >
-                    <a href="#"
+                    <a href="{{ route('penjualan.kasir') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 hover:text-teal-700 dark:hover:text-teal-300 transition-colors duration-200">
                         Kasir
                     </a>
@@ -212,7 +212,7 @@
                     id="masterDataDropdown"
                     class="hidden mt-2 bg-gray-50 dark:bg-gray-900 rounded-2xl p-3 space-y-1 transition-colors duration-200"
                 >
-                    <a href="#"
+                    <a href="{{ route('masterdata.masterproduk') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Produk
                     </a>
@@ -244,27 +244,7 @@
 
                     <a href="#"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Jenis Pelayanan
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Jenis Antrian
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Produk Lab
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Item Pemeriksaan
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Master Pajak
                     </a>
                 </div>
             </div>

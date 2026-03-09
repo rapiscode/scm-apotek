@@ -29,6 +29,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
+    Route::get('/master-data/master-produk', function () {
+        return view('masterdata.masterproduk');
+    })->name('masterdata.masterproduk');
+    
     // Control User
     Route::prefix('control-user')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
@@ -52,5 +56,9 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/{user}/toggle', [UserManagementController::class, 'toggle'])->name('toggle');
         Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
     });
+
+    Route::get('/penjualan/kasir', function () {
+        return view('Penjualan.kasir');
+    })->name('penjualan.kasir');
 
 });
