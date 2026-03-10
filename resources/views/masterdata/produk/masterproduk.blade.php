@@ -82,9 +82,16 @@
             </div>
 
             @if(session('success'))
-                <div class="mb-4 rounded-lg bg-green-100 text-green-700 px-4 py-3">
-                    {{ session('success') }}
+            <div class="mb-4 flex items-center justify-between rounded-lg bg-green-100 text-green-700 px-4 py-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ session('success') }}</span>
                 </div>
+
+                <button onclick="this.parentElement.remove()" class="text-green-700 hover:text-green-900">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             @endif
 
             <!-- Tabel -->
@@ -136,10 +143,34 @@
                                     <td class="px-4 py-3 min-w-[180px]">{{ $produk->catatan ?? '-' }}</td>
                                     <td class="px-4 py-3 min-w-[120px]">
                                         <div class="flex items-center gap-2">
-                                            <button type="button" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600">
+                                            <button
+                                                type="button"
+                                                class="openEditProdukModal w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                                data-id="{{ $produk->id }}"
+                                                data-tipe_produk="{{ $produk->tipe_produk }}"
+                                                data-nama_produk="{{ $produk->nama_produk }}"
+                                                data-nama_pabrik="{{ $produk->nama_pabrik }}"
+                                                data-sku="{{ $produk->sku }}"
+                                                data-barcode="{{ $produk->barcode }}"
+                                                data-pajak="{{ $produk->pajak }}"
+                                                data-satuan_utama="{{ $produk->satuan_utama }}"
+                                                data-harga_beli="{{ $produk->harga_beli }}"
+                                                data-harga_jual="{{ $produk->harga_jual }}"
+                                                data-stok_minimal="{{ $produk->stok_minimal }}"
+                                                data-stok_maksimal="{{ $produk->stok_maksimal }}"
+                                                data-rak_penyimpanan="{{ $produk->rak_penyimpanan }}"
+                                                data-status_penjualan="{{ $produk->status_penjualan }}"
+                                                data-catatan="{{ $produk->catatan }}"
+                                            >
                                                 <i class="fas fa-pen text-sm"></i>
                                             </button>
-                                            <button type="button" class="w-8 h-8 rounded-lg bg-red-50 text-red-600">
+
+                                            <button
+                                                type="button"
+                                                class="openDeleteProdukModal w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                                                data-id="{{ $produk->id }}"
+                                                data-nama="{{ $produk->nama_produk }}"
+                                            >
                                                 <i class="fas fa-trash text-sm"></i>
                                             </button>
                                         </div>
@@ -188,14 +219,16 @@
 
     <div class="absolute inset-0 flex items-center justify-center p-6 sm:p-8">
         <form
+            id="produkForm"
             action="{{ route('masterdata.masterproduk.store') }}"
             method="POST"
             class="relative z-[10000] w-full max-w-[650px] h-[92vh] bg-white dark:bg-gray-950 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-colors duration-200"
         >
             @csrf
+            <input type="hidden" name="_method" id="produkFormMethod" value="POST">
             <!-- Header -->
             <div class="bg-blue-600 px-6 py-5 flex items-center justify-between">
-                <h3 class="text-2xl font-bold text-white leading-none">Tambah Produk</h3>
+                <h3 id="produkModalTitle" class="text-2xl font-bold text-white leading-none">Tambah Produk</h3>
                 <button
                     type="button"
                     id="closeProdukBaruModal"
@@ -266,6 +299,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nama Pabrik</label>
                             <input
                                 type="text"
+                                id="namaPabrikInput"
                                 name="nama_pabrik"
                                 class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
                             >
@@ -294,6 +328,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Barcode</label>
                             <input
                                 type="text"
+                                id="barcodeInput"
                                 name="barcode"
                                 class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
                             >
@@ -302,6 +337,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Pajak</label>
                             <select
+                                id="pajakInput"
                                 name="pajak"
                                 class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
                             >
@@ -380,6 +416,7 @@
                                 <span class="text-sm text-gray-700">Rp.</span>
                                 <input
                                     type="number"
+                                    id="hargaBeliInput"
                                     name="harga_beli"
                                     min="0"
                                     step="0.01"
@@ -400,6 +437,7 @@
                                 <span class="text-sm text-gray-700">Rp.</span>
                                 <input
                                     type="number"
+                                    id="hargaJualInput"
                                     name="harga_jual"
                                     min="0"
                                     step="0.01"
@@ -420,6 +458,7 @@
                                     <div class="flex">
                                         <input
                                             type="number"
+                                            id="stokMinimalInput"
                                             name="stok_minimal"
                                             value="0"
                                             class="w-full rounded-l-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900"
@@ -437,6 +476,7 @@
                                     <div class="flex">
                                         <input
                                             type="number"
+                                            id="stokMaksimalInput"
                                             name="stok_maksimal"
                                             value="0"
                                             class="w-full rounded-l-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900"
@@ -537,6 +577,7 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Catatan Lainnya</label>
                                     <input
                                         type="text"
+                                        id="catatanInput"
                                         name="catatan"
                                         class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
                                     >
@@ -559,6 +600,7 @@
 
                 <button
                     type="submit"
+                    id="saveProdukSubmitBtn"
                     class="px-6 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold"
                 >
                     Simpan
@@ -724,13 +766,13 @@
         <!-- Body -->
         <div class="flex-1 overflow-y-auto p-6">
             <div class="flex justify-center mb-6">
-                <button
-                    type="button"
+                <a
+                    href="{{ route('masterdata.masterproduk.template.download') }}"
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold transition-colors duration-200"
                 >
                     <i class="fas fa-cloud-download-alt"></i>
                     Download Template
-                </button>
+                </a>
             </div>
 
             <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm overflow-hidden">
@@ -789,6 +831,49 @@
                 >
                     Kirim
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- modal hapus -->
+<div id="deleteProdukModal" class="fixed inset-0 z-[10070] hidden">
+    <div id="deleteProdukOverlay" class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="w-full max-w-[520px] rounded-3xl bg-white dark:bg-gray-950 shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div class="px-8 py-10 text-center">
+                <div class="mx-auto mb-6 w-20 h-20 rounded-full border-4 border-orange-300 flex items-center justify-center">
+                    <i class="fas fa-exclamation text-4xl text-orange-300"></i>
+                </div>
+
+                <h3 class="text-4xl font-extrabold text-gray-700 dark:text-gray-100 mb-4">
+                    Yakin nih?
+                </h3>
+
+                <p class="text-2xl leading-9 text-gray-600 dark:text-gray-300 mb-8">
+                    Pastikan produk <span id="deleteProdukNama" class="font-semibold"></span> benar-benar ingin dihapus.
+                </p>
+
+                <form id="deleteProdukForm" method="POST" class="flex items-center justify-center gap-3">
+                    @csrf
+                    @method('DELETE')
+
+                    <button
+                        type="submit"
+                        class="px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-xl"
+                    >
+                        Yup, Hapus Sekarang!
+                    </button>
+
+                    <button
+                        type="button"
+                        id="cancelDeleteProdukBtn"
+                        class="px-6 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xl"
+                    >
+                        Cancel
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -901,6 +986,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!produkModal) return;
         produkModal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+
+        resetProdukFormToCreate();
     }
 
     openProdukBtn?.addEventListener('click', openProdukModal);
@@ -970,6 +1057,149 @@ document.addEventListener('DOMContentLoaded', function () {
             btnKirimFile?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
         }
     });
+
+    // =========================
+    // EDIT PRODUK
+    // =========================
+    const produkForm = document.getElementById('produkForm');
+    const produkFormMethod = document.getElementById('produkFormMethod');
+    const produkModalTitle = document.getElementById('produkModalTitle');
+
+    const namaPabrikInput = document.getElementById('namaPabrikInput');
+    const barcodeInput = document.getElementById('barcodeInput');
+    const pajakInput = document.getElementById('pajakInput');
+    const hargaBeliInput = document.getElementById('hargaBeliInput');
+    const hargaJualInput = document.getElementById('hargaJualInput');
+    const stokMinimalInput = document.getElementById('stokMinimalInput');
+    const stokMaksimalInput = document.getElementById('stokMaksimalInput');
+    const catatanInput = document.getElementById('catatanInput');
+    const saveProdukSubmitBtn = document.getElementById('saveProdukSubmitBtn');
+
+    function resetProdukFormToCreate() {
+        if (produkForm) {
+            produkForm.action = "{{ route('masterdata.masterproduk.store') }}";
+        }
+
+        if (produkFormMethod) {
+            produkFormMethod.value = 'POST';
+        }
+
+        if (produkModalTitle) {
+            produkModalTitle.textContent = 'Tambah Produk';
+        }
+
+        if (saveProdukSubmitBtn) {
+            saveProdukSubmitBtn.textContent = 'Simpan';
+        }
+
+        if (namaProdukInput) namaProdukInput.value = '';
+        if (namaPabrikInput) namaPabrikInput.value = '';
+        if (skuInput) skuInput.value = '';
+        if (barcodeInput) barcodeInput.value = '';
+        if (pajakInput) pajakInput.value = 'PPN';
+        if (satuanUtamaSearch) satuanUtamaSearch.value = '';
+        if (satuanUtamaValue) satuanUtamaValue.value = '';
+        if (hargaBeliInput) hargaBeliInput.value = '';
+        if (hargaJualInput) hargaJualInput.value = '';
+        if (stokMinimalInput) stokMinimalInput.value = 0;
+        if (stokMaksimalInput) stokMaksimalInput.value = 0;
+        if (rakPenyimpananSearch) rakPenyimpananSearch.value = '';
+        if (rakPenyimpananValue) rakPenyimpananValue.value = '';
+        if (catatanInput) catatanInput.value = '';
+
+        setActiveTipeProduk('umum');
+        setActiveStatusPenjualan('dijual');
+    }
+
+    openProdukBtn?.addEventListener('click', function () {
+        resetProdukFormToCreate();
+        openProdukModal();
+    });
+
+    document.querySelectorAll('.openEditProdukModal').forEach((btn) => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+
+            if (produkForm) {
+                produkForm.action = `/master-data/master-produk/${id}`;
+            }
+
+            if (produkFormMethod) {
+                produkFormMethod.value = 'PUT';
+            }
+
+            if (produkModalTitle) {
+                produkModalTitle.textContent = 'Edit Produk';
+            }
+
+            if (saveProdukSubmitBtn) {
+                saveProdukSubmitBtn.textContent = 'Simpan';
+            }
+
+            if (namaProdukInput) namaProdukInput.value = this.dataset.nama_produk || '';
+            if (namaPabrikInput) namaPabrikInput.value = this.dataset.nama_pabrik || '';
+            if (skuInput) skuInput.value = this.dataset.sku || '';
+            if (barcodeInput) barcodeInput.value = this.dataset.barcode || '';
+            if (pajakInput) pajakInput.value = this.dataset.pajak || 'PPN';
+
+            if (satuanUtamaSearch) satuanUtamaSearch.value = this.dataset.satuan_utama || '';
+            if (satuanUtamaValue) satuanUtamaValue.value = this.dataset.satuan_utama || '';
+
+            if (hargaBeliInput) hargaBeliInput.value = this.dataset.harga_beli || 0;
+            if (hargaJualInput) hargaJualInput.value = this.dataset.harga_jual || 0;
+            if (stokMinimalInput) stokMinimalInput.value = this.dataset.stok_minimal || 0;
+            if (stokMaksimalInput) stokMaksimalInput.value = this.dataset.stok_maksimal || 0;
+
+            if (rakPenyimpananSearch) rakPenyimpananSearch.value = this.dataset.rak_penyimpanan || '';
+            if (rakPenyimpananValue) rakPenyimpananValue.value = this.dataset.rak_penyimpanan || '';
+
+            if (catatanInput) catatanInput.value = this.dataset.catatan || '';
+
+            setActiveTipeProduk(this.dataset.tipe_produk || 'umum');
+            setActiveStatusPenjualan(this.dataset.status_penjualan || 'dijual');
+
+            openProdukModal();
+        });
+    });
+
+    // =========================
+    // DELETE PRODUK
+    // =========================
+    const deleteProdukModal = document.getElementById('deleteProdukModal');
+    const deleteProdukOverlay = document.getElementById('deleteProdukOverlay');
+    const deleteProdukForm = document.getElementById('deleteProdukForm');
+    const deleteProdukNama = document.getElementById('deleteProdukNama');
+    const cancelDeleteProdukBtn = document.getElementById('cancelDeleteProdukBtn');
+
+    function openDeleteProdukModal() {
+        deleteProdukModal?.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeDeleteProdukModal() {
+        deleteProdukModal?.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    document.querySelectorAll('.openDeleteProdukModal').forEach((btn) => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+            const nama = this.dataset.nama || '-';
+
+            if (deleteProdukForm) {
+                deleteProdukForm.action = `/master-data/master-produk/${id}`;
+            }
+
+            if (deleteProdukNama) {
+                deleteProdukNama.textContent = nama;
+            }
+
+            openDeleteProdukModal();
+        });
+    });
+
+    cancelDeleteProdukBtn?.addEventListener('click', closeDeleteProdukModal);
+    deleteProdukOverlay?.addEventListener('click', closeDeleteProdukModal);
 
     // =========================
     // DRAWER: UBAH SEKALIGUS

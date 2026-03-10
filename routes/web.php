@@ -22,6 +22,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/master-data/master-produk', [ProdukController::class, 'index'])->name('masterdata.masterproduk');
     Route::post('/master-data/master-produk', [ProdukController::class, 'store'])->name('masterdata.masterproduk.store');
+    Route::put('/master-data/master-produk/{produk}', [ProdukController::class, 'update'])->name('masterdata.masterproduk.update');
+    Route::delete('/master-data/master-produk/{produk}', [ProdukController::class, 'destroy'])->name('masterdata.masterproduk.destroy');
 
     Route::get('/master-data/master-kategori', function () {
         return view('masterdata.masterkategori');
@@ -38,6 +40,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/master-data/master-gudang', function () {
         return view('masterdata.mastergudang');
     })->name('masterdata.mastergudang');
+
+    Route::get('/master-data/master-produk/template/download', [ProdukController::class, 'downloadTemplate'])
+        ->name('masterdata.masterproduk.template.download');
 
     Route::prefix('control-user')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
