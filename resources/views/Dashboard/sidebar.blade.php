@@ -217,34 +217,24 @@
                         Master Produk
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('masterdata.masterkategori') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Kategori
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('masterdata.mastersatuan') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Satuan
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('masterdata.masterrak') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Rak
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('masterdata.mastergudang') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Gudang
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Master Kategori Pelanggan
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Master Item Pemeriksaan
                     </a>
                 </div>
             </div>
@@ -538,5 +528,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+@stack('scripts')
 </body>
 </html>
