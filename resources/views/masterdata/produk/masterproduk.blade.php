@@ -813,25 +813,30 @@
                 <span class="font-medium">Saya Mengerti</span>
             </label>
 
-            <div class="flex items-center gap-3">
-                <button
-                    id="btnPilihFile"
-                    type="button"
-                    class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-500 font-semibold cursor-not-allowed"
-                    disabled
-                >
-                    Pilih File
-                </button>
+            <form id="formImportProduk" action="{{ route('masterdata.masterproduk.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="file" id="inputFileProduk" name="file_import" accept=".xlsx,.xls" class="hidden">
 
-                <button
-                    id="btnKirimFile"
-                    type="button"
-                    class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-500 font-semibold cursor-not-allowed"
-                    disabled
-                >
-                    Kirim
-                </button>
-            </div>
+                <div class="flex items-center gap-3">
+                    <button
+                        id="btnPilihFile"
+                        type="button"
+                        class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-500 font-semibold cursor-not-allowed"
+                        disabled
+                    >
+                        Pilih File
+                    </button>
+
+                    <button
+                        id="btnKirimFile"
+                        type="button"
+                        class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-500 font-semibold cursor-not-allowed"
+                        disabled
+                    >
+                        Kirim
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1056,6 +1061,28 @@ document.addEventListener('DOMContentLoaded', function () {
             btnKirimFile?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
             btnKirimFile?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
         }
+    });
+
+    // Pilih File → trigger input file
+    btnPilihFile?.addEventListener('click', function () {
+        document.getElementById('inputFileProduk')?.click();
+    });
+
+    // Tampilkan nama file yang dipilih di tombol
+    document.getElementById('inputFileProduk')?.addEventListener('change', function () {
+        if (this.files.length > 0) {
+            btnPilihFile.textContent = this.files[0].name;
+        }
+    });
+
+    // Kirim → submit form
+    btnKirimFile?.addEventListener('click', function () {
+        const fileInput = document.getElementById('inputFileProduk');
+        if (!fileInput?.files.length) {
+            alert('Pilih file Excel terlebih dahulu!');
+            return;
+        }
+        document.getElementById('formImportProduk')?.submit();
     });
 
     // =========================

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Produk;
 use Illuminate\Http\Request;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class ProdukController extends Controller
 {
@@ -114,5 +115,48 @@ class ProdukController extends Controller
         }
 
         return response()->download($path, 'template_import_produk.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file_import' => 'required|file|mimes:xlsx,xls|max:5120',
+        ]);
+
+        $file = $request->file('file_import');
+        $path = $file->storeAs('temp', $file->getClientOriginalName());
+
+        (new FastExcel)->startRow(2)->sheet(2)->import(storage_path('app/private/' . $path), function ($row) {
+            if (empty($row['sku']) || empty($row['nama_produk'])) {
+                return null;
+            }
+
+            if (Produk::where('sku', $row['sku'])->exists()) {
+                return null;
+            }
+
+            return Produk::create([
+                'tipe_produk'      => $row['tipe_produk'] ?? 'umum',
+                'nama_produk'      => $row['nama_produk'],
+                'nama_pabrik'      => $row['nama_pabrik'] ?? null,
+                'sku'              => $row['sku'],
+                'barcode'          => $row['barcode'] ?? null,
+                'pajak'            => $row['pajak'] ?? null,
+                'satuan_utama'     => $row['satuan_utama'],
+                'harga_beli'       => $row['harga_beli'] ?? 0,
+                'harga_jual'       => $row['harga_jual'] ?? 0,
+                'stok_minimal'     => $row['stok_minimal'] ?? 0,
+                'stok_maksimal'    => $row['stok_maksimal'] ?? 0,
+                'rak_penyimpanan'  => $row['rak_penyimpanan'] ?? null,
+                'status_penjualan' => $row['status_penjualan'] ?? 'dijual',
+                'catatan'          => $row['catatan'] ?? null,
+            ]);
+        });
+
+        \Storage::delete('temp/' . $file->getClientOriginalName());
+
+        return redirect()
+            ->route('masterdata.masterproduk')
+            ->with('success', 'Produk berhasil diimport.');
     }
 }
