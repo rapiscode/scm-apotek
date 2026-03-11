@@ -28,6 +28,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/master-data/master-produk/import', [ProdukController::class, 'import'])
     ->name('masterdata.masterproduk.import');
 
+    Route::get('/master-data/master-produk/export', [ProdukController::class, 'exportEditTemplate'])
+    ->name('masterdata.masterproduk.export');
+
+    Route::post('/master-data/master-produk/import-update', [ProdukController::class, 'importUpdate'])
+        ->name('masterdata.masterproduk.importUpdate');
+
     Route::put('/master-data/master-produk/{produk}', [ProdukController::class, 'update'])->name('masterdata.masterproduk.update');
     Route::delete('/master-data/master-produk/{produk}', [ProdukController::class, 'destroy'])->name('masterdata.masterproduk.destroy');
 

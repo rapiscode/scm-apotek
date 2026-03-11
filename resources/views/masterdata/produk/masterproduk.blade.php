@@ -46,6 +46,7 @@
                 <div class="relative z-0 w-full max-w-xs">
                     <input
                         type="text"
+                        id="searchProdukInput"
                         placeholder="Cari data"
                         class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-colors duration-200"
                     >
@@ -58,18 +59,12 @@
                 <div class="flex items-center gap-2">
                     <button
                         type="button"
+                        id="openFilterModal"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
                     >
                         <i class="fas fa-filter text-sm"></i>
                         <span>Filter</span>
-                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs font-semibold">0</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        class="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-                    >
-                        <i class="fas fa-sparkles"></i>
+                        <span id="filterCountBadge" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs font-semibold">0</span>
                     </button>
 
                     <button
@@ -94,12 +89,18 @@
             </div>
             @endif
 
+            @if($errors->has('file_edit_produk'))
+                <div class="mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-3">
+                    {{ $errors->first('file_edit_produk') }}
+                </div>
+            @endif
+
             <!-- Tabel -->
             <div class="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-1 flex flex-col">
                 <div class="overflow-x-auto overflow-y-auto flex-1">
                     <table class="min-w-[1900px] w-full text-sm">
                         <thead class="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
-                            <tr>
+                            <tr class="produk-row border-t border-gray-100 dark:border-gray-800">
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap w-16">No.</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[300px]">Nama</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[150px]">Kode Produk (SKU)</th>
@@ -116,9 +117,13 @@
                             </tr>
                         </thead>
 
-                        <tbody class="bg-white dark:bg-gray-950">
+                        <tbody id="produkTableBody" class="bg-white dark:bg-gray-950">
                             @forelse ($produks as $index => $produk)
-                                <tr class="border-t border-gray-100 dark:border-gray-800">
+                                <tr
+                                    class="produk-row border-t border-gray-100 dark:border-gray-800"
+                                    data-status="{{ $produk->status_penjualan }}"
+                                    data-rak="{{ $produk->rak_penyimpanan ?? '' }}"
+                                >
                                     <td class="px-4 py-3">{{ $index + 1 }}</td>
                                     <td class="px-4 py-3 min-w-[300px]">{{ $produk->nama_produk }}</td>
                                     <td class="px-4 py-3 min-w-[150px]">{{ $produk->sku }}</td>
@@ -177,7 +182,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr class="border-t border-gray-100 dark:border-gray-800">
+                                <tr id="emptyTableRow" class="border-t border-gray-100 dark:border-gray-800">
                                     <td colspan="13" class="text-center py-20 text-gray-500 dark:text-gray-400">
                                         Data tidak ditemukan
                                     </td>
@@ -906,13 +911,13 @@
         <!-- Body -->
         <div class="flex-1 overflow-y-auto p-6">
             <div class="flex justify-center mb-6">
-                <button
-                    type="button"
+                <a
+                    href="{{ route('masterdata.masterproduk.export') }}"
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold transition-colors duration-200"
                 >
                     <i class="fas fa-cloud-download-alt"></i>
                     Download Data Terakhir
-                </button>
+                </a>
             </div>
 
             <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm overflow-hidden">
@@ -955,7 +960,23 @@
                 <span class="font-medium">Saya Mengerti</span>
             </label>
 
-            <div class="flex items-center gap-3">
+            <form
+                id="formEditProdukMassal"
+                action="{{ route('masterdata.masterproduk.importUpdate') }}"
+                method="POST"
+                enctype="multipart/form-data"
+                class="flex items-center gap-3"
+            >
+                @csrf
+
+                <input
+                    type="file"
+                    id="inputFileEditProduk"
+                    name="file_edit_produk"
+                    accept=".xlsx,.xls"
+                    class="hidden"
+                >
+
                 <button
                     id="btnPilihFileEdit"
                     type="button"
@@ -963,6 +984,94 @@
                     disabled
                 >
                     Pilih File
+                </button>
+
+                <button
+                    id="btnKirimFileEdit"
+                    type="button"
+                    class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-500 font-semibold cursor-not-allowed"
+                    disabled
+                >
+                    Kirim
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Filter Produk -->
+<div id="filterProdukModal" class="fixed inset-0 z-[10080] hidden">
+    <div id="filterProdukOverlay" class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="w-full max-w-[620px] rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 transition-colors duration-200">
+            <!-- Header -->
+            <div class="bg-blue-600 px-6 py-5 flex items-center justify-between">
+                <h3 class="text-2xl font-bold text-white">Filter Data</h3>
+                <button
+                    type="button"
+                    id="closeFilterModal"
+                    class="text-white/90 hover:text-white text-xl"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-6 bg-white dark:bg-gray-950 transition-colors duration-200">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-[180px_20px_1fr] items-center gap-3">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Status</label>
+                        <span class="text-gray-500 dark:text-gray-400">:</span>
+                        <select
+                            id="filterStatus"
+                            class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
+                        >
+                            <option value="">Semua Produk</option>
+                            @php
+                                $statusList = $produks->pluck('status_penjualan')->filter()->unique()->values();
+                            @endphp
+                            @foreach ($statusList as $status)
+                                <option value="{{ $status }}">{{ $status === 'dijual' ? 'Dijual' : 'Tidak Dijual' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-[180px_20px_1fr] items-center gap-3">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Rak Penyimpanan</label>
+                        <span class="text-gray-500 dark:text-gray-400">:</span>
+                        <select
+                            id="filterRak"
+                            class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
+                        >
+                            <option value="">Semua Rak</option>
+                            @php
+                                $rakList = $produks->pluck('rak_penyimpanan')->filter()->unique()->values();
+                            @endphp
+                            @foreach ($rakList as $rak)
+                                <option value="{{ $rak }}">{{ $rak }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 flex items-center justify-between transition-colors duration-200">
+                <button
+                    type="button"
+                    id="resetFilterBtn"
+                    class="text-cyan-500 hover:text-cyan-600 font-semibold"
+                >
+                    Reset Filter
+                </button>
+
+                <button
+                    type="button"
+                    id="applyFilterBtn"
+                    class="px-6 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold"
+                >
+                    Terapkan
                 </button>
             </div>
         </div>
@@ -995,7 +1104,6 @@ document.addEventListener('DOMContentLoaded', function () {
         resetProdukFormToCreate();
     }
 
-    openProdukBtn?.addEventListener('click', openProdukModal);
     closeProdukBtn?.addEventListener('click', closeProdukModal);
     cancelProdukBtn?.addEventListener('click', closeProdukModal);
     produkOverlay?.addEventListener('click', closeProdukModal);
@@ -1044,13 +1152,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (enabled) {
             btnPilihFile?.removeAttribute('disabled');
-            btnKirimFile?.removeAttribute('disabled');
-
             btnPilihFile?.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
             btnPilihFile?.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
 
-            btnKirimFile?.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
-            btnKirimFile?.classList.add('bg-teal-500', 'text-white', 'hover:bg-teal-600');
+            btnKirimFile?.setAttribute('disabled', 'disabled');
+            btnKirimFile?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFile?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
         } else {
             btnPilihFile?.setAttribute('disabled', 'disabled');
             btnKirimFile?.setAttribute('disabled', 'disabled');
@@ -1060,6 +1167,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             btnKirimFile?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
             btnKirimFile?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
+
+            const inputFile = document.getElementById('inputFileProduk');
+            if (inputFile) inputFile.value = '';
+            if (btnPilihFile) btnPilihFile.textContent = 'Pilih File';
         }
     });
 
@@ -1072,6 +1183,16 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('inputFileProduk')?.addEventListener('change', function () {
         if (this.files.length > 0) {
             btnPilihFile.textContent = this.files[0].name;
+
+            btnKirimFile?.removeAttribute('disabled');
+            btnKirimFile?.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFile?.classList.add('bg-teal-500', 'text-white', 'hover:bg-teal-600');
+        } else {
+            btnPilihFile.textContent = 'Pilih File';
+
+            btnKirimFile?.setAttribute('disabled', 'disabled');
+            btnKirimFile?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFile?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
         }
     });
 
@@ -1237,9 +1358,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const ubahDrawerOverlay = document.getElementById('ubahSekaligusOverlay');
     const closeUbahDrawerBtn = document.getElementById('closeUbahSekaligusDrawer');
 
-    const checkboxPahamEdit = document.getElementById('checkboxPahamEdit');
-    const btnPilihFileEdit = document.getElementById('btnPilihFileEdit');
-
     function openUbahDrawer() {
         if (!ubahDrawer || !ubahDrawerPanel) return;
 
@@ -1261,6 +1379,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.classList.remove('overflow-hidden');
         }, 300);
     }
+
+    openUbahDrawerBtn?.addEventListener('click', openUbahDrawer);
+    closeUbahDrawerBtn?.addEventListener('click', closeUbahDrawer);
+    ubahDrawerOverlay?.addEventListener('click', closeUbahDrawer);
 
     // =========================
     // MODAL: TAMBAH SATUAN KEMASAN
@@ -1308,9 +1430,11 @@ document.addEventListener('DOMContentLoaded', function () {
         closeSatuanKemasanModal();
     });
 
-    openUbahDrawerBtn?.addEventListener('click', openUbahDrawer);
-    closeUbahDrawerBtn?.addEventListener('click', closeUbahDrawer);
-    ubahDrawerOverlay?.addEventListener('click', closeUbahDrawer);
+    const checkboxPahamEdit = document.getElementById('checkboxPahamEdit');
+    const btnPilihFileEdit = document.getElementById('btnPilihFileEdit');
+    const btnKirimFileEdit = document.getElementById('btnKirimFileEdit');
+    const inputFileEditProduk = document.getElementById('inputFileEditProduk');
+    const formEditProdukMassal = document.getElementById('formEditProdukMassal');
 
     checkboxPahamEdit?.addEventListener('change', function () {
         const enabled = this.checked;
@@ -1319,11 +1443,58 @@ document.addEventListener('DOMContentLoaded', function () {
             btnPilihFileEdit?.removeAttribute('disabled');
             btnPilihFileEdit?.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
             btnPilihFileEdit?.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+
+            btnKirimFileEdit?.setAttribute('disabled', 'disabled');
+            btnKirimFileEdit?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFileEdit?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
         } else {
             btnPilihFileEdit?.setAttribute('disabled', 'disabled');
+            btnKirimFileEdit?.setAttribute('disabled', 'disabled');
+
             btnPilihFileEdit?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
             btnPilihFileEdit?.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+
+            btnKirimFileEdit?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFileEdit?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
+
+            if (inputFileEditProduk) {
+                inputFileEditProduk.value = '';
+            }
+
+            if (btnPilihFileEdit) {
+                btnPilihFileEdit.textContent = 'Pilih File';
+            }
         }
+    });
+
+    btnPilihFileEdit?.addEventListener('click', function () {
+        if (this.hasAttribute('disabled')) return;
+        inputFileEditProduk?.click();
+    });
+
+    inputFileEditProduk?.addEventListener('change', function () {
+        if (this.files.length > 0) {
+            btnPilihFileEdit.textContent = this.files[0].name;
+
+            btnKirimFileEdit?.removeAttribute('disabled');
+            btnKirimFileEdit?.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFileEdit?.classList.add('bg-teal-500', 'text-white', 'hover:bg-teal-600');
+        } else {
+            btnPilihFileEdit.textContent = 'Pilih File';
+
+            btnKirimFileEdit?.setAttribute('disabled', 'disabled');
+            btnKirimFileEdit?.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+            btnKirimFileEdit?.classList.remove('bg-teal-500', 'text-white', 'hover:bg-teal-600');
+        }
+    });
+
+    btnKirimFileEdit?.addEventListener('click', function () {
+        if (!inputFileEditProduk?.files.length) {
+            alert('Pilih file Excel terlebih dahulu!');
+            return;
+        }
+
+        formEditProdukMassal?.submit();
     });
 
     // =========================
@@ -1776,6 +1947,149 @@ document.addEventListener('DOMContentLoaded', function () {
         generateSku();
     });
 
+    // =========================
+    // SEARCH PRODUK TABLE
+    // =========================
+    const searchProdukInput = document.getElementById('searchProdukInput');
+    const produkRows = document.querySelectorAll('.produk-row');
+    const produkTableBody = document.getElementById('produkTableBody');
+
+    function createSearchEmptyRow() {
+        let row = document.createElement('tr');
+
+        row.id = 'searchEmptyRow';
+        row.className = 'border-t border-gray-100 dark:border-gray-800';
+
+        row.innerHTML = `
+            <td colspan="13" class="text-center py-20 text-gray-500 dark:text-gray-400">
+                Data tidak ditemukan
+            </td>
+        `;
+
+        return row;
+    }
+
+    searchProdukInput?.addEventListener('input', function () {
+        applyProdukFilters();
+    });
+
+    // =========================
+    // MODAL FILTER PRODUK
+    // =========================
+    const openFilterModalBtn = document.getElementById('openFilterModal');
+    const filterProdukModal = document.getElementById('filterProdukModal');
+    const filterProdukOverlay = document.getElementById('filterProdukOverlay');
+    const closeFilterModalBtn = document.getElementById('closeFilterModal');
+
+    const filterStatus = document.getElementById('filterStatus');
+    const filterRak = document.getElementById('filterRak');
+    const resetFilterBtn = document.getElementById('resetFilterBtn');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const filterCountBadge = document.getElementById('filterCountBadge');
+
+    function updateFilterCount() {
+
+        let count = 0;
+
+        if (filterStatus?.value) count++;
+        if (filterRak?.value) count++;
+
+        if (filterCountBadge) {
+            filterCountBadge.textContent = count;
+        }
+
+    }
+
+    function openFilterModal() {
+        if (!filterProdukModal) return;
+        filterProdukModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeFilterModal() {
+        if (!filterProdukModal) return;
+        filterProdukModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    openFilterModalBtn?.addEventListener('click', openFilterModal);
+    closeFilterModalBtn?.addEventListener('click', closeFilterModal);
+    filterProdukOverlay?.addEventListener('click', closeFilterModal);
+
+    function showFilterEmptyRow() {
+        let searchEmptyRow = document.getElementById('searchEmptyRow');
+
+        if (!searchEmptyRow) {
+            searchEmptyRow = document.createElement('tr');
+            searchEmptyRow.id = 'searchEmptyRow';
+            searchEmptyRow.className = 'border-t border-gray-100 dark:border-gray-800';
+            searchEmptyRow.innerHTML = `
+                <td colspan="13" class="text-center py-20 text-gray-500 dark:text-gray-400">
+                    Data tidak ditemukan
+                </td>
+            `;
+            produkTableBody?.appendChild(searchEmptyRow);
+        }
+    }
+
+    function removeFilterEmptyRow() {
+        document.getElementById('searchEmptyRow')?.remove();
+    }
+
+    function applyProdukFilters() {
+        const keyword = searchProdukInput?.value?.toLowerCase().trim() || '';
+        const selectedStatus = filterStatus?.value || '';
+        const selectedRak = filterRak?.value || '';
+
+        const rows = document.querySelectorAll('.produk-row');
+        let visibleCount = 0;
+
+        removeFilterEmptyRow();
+
+        rows.forEach((row) => {
+
+            const rowText = row.textContent.toLowerCase();
+            const rowStatus = row.dataset.status || '';
+            const rowRak = row.dataset.rak || '';
+
+            const matchKeyword = !keyword || rowText.includes(keyword);
+            const matchStatus = !selectedStatus || rowStatus === selectedStatus;
+            const matchRak = !selectedRak || rowRak === selectedRak;
+
+            const isVisible = matchKeyword && matchStatus && matchRak;
+
+            row.classList.toggle('hidden', !isVisible);
+
+            if (isVisible) {
+                visibleCount++;
+            }
+
+        });
+
+        if (visibleCount === 0) {
+            showFilterEmptyRow();
+        }
+    }
+
+    applyFilterBtn?.addEventListener('click', function () {
+
+        applyProdukFilters();
+        updateFilterCount();
+        closeFilterModal();
+
+    });
+
+    resetFilterBtn?.addEventListener('click', function () {
+
+        if (filterStatus) filterStatus.value = '';
+        if (filterRak) filterRak.value = '';
+
+        applyProdukFilters();
+        updateFilterCount();
+
+    });
+
+    updateFilterCount();
 });
 </script>
 @endpush

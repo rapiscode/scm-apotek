@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Produk;
 use Illuminate\Http\Request;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Illuminate\Support\Facades\Storage;
+
 
 class ProdukController extends Controller
 {
@@ -124,19 +126,28 @@ class ProdukController extends Controller
         ]);
 
         $file = $request->file('file_import');
-        $path = $file->storeAs('temp', $file->getClientOriginalName());
+        $filename = time() . '_' . $file->getClientOriginalName();
+
+        $path = $file->storeAs('temp', $filename, 'local');
+        $fullPath = Storage::disk('local')->path($path);
+
+        if (!file_exists($fullPath)) {
+            return redirect()
+                ->route('masterdata.masterproduk')
+                ->with('success', 'File upload gagal ditemukan.');
+        }
 
         $rowNumber = 0;
 
-        (new FastExcel)->startRow(1)->sheet(2)->import(storage_path('app/private/' . $path), function ($row) use (&$rowNumber) {
+        (new FastExcel)->startRow(1)->sheet(2)->import($fullPath, function ($row) use (&$rowNumber) {
             $rowNumber++;
 
-            // Skip baris pertama (baris contoh)
+            // skip baris contoh
             if ($rowNumber === 1) {
                 return null;
             }
 
-            if (empty($row['sku *']) || empty($row['nama_produk *'])) {
+            if (empty($row['sku *'] ?? null) || empty($row['nama_produk *'] ?? null)) {
                 return null;
             }
 
@@ -146,12 +157,12 @@ class ProdukController extends Controller
 
             return Produk::create([
                 'tipe_produk'      => $row['tipe_produk *'] ?? 'umum',
-                'nama_produk'      => $row['nama_produk *'],
+                'nama_produk'      => $row['nama_produk *'] ?? null,
                 'nama_pabrik'      => $row['nama_pabrik'] ?? null,
-                'sku'              => $row['sku *'],
+                'sku'              => $row['sku *'] ?? null,
                 'barcode'          => $row['barcode'] ?? null,
                 'pajak'            => $row['pajak'] ?? null,
-                'satuan_utama'     => $row['satuan_utama *'],
+                'satuan_utama'     => $row['satuan_utama *'] ?? null,
                 'harga_beli'       => $row['harga_beli'] ?? 0,
                 'harga_jual'       => $row['harga_jual'] ?? 0,
                 'stok_minimal'     => $row['stok_minimal'] ?? 0,
@@ -162,10 +173,97 @@ class ProdukController extends Controller
             ]);
         });
 
-        \Storage::delete('temp/' . $file->getClientOriginalName());
+        Storage::disk('local')->delete($path);
 
         return redirect()
             ->route('masterdata.masterproduk')
             ->with('success', 'Produk berhasil diimport.');
+    }
+
+    public function exportEditTemplate()
+    {
+        $produks = Produk::select([
+            'id',
+            'tipe_produk',
+            'nama_produk',
+            'nama_pabrik',
+            'sku',
+            'barcode',
+            'pajak',
+            'satuan_utama',
+            'harga_beli',
+            'harga_jual',
+            'stok_minimal',
+            'stok_maksimal',
+            'rak_penyimpanan',
+            'status_penjualan',
+            'catatan',
+        ])->get();
+
+        $fileName = 'edit_produk_' . now()->format('Ymd_His') . '.xlsx';
+        $filePath = storage_path('app/temp/' . $fileName);
+
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0777, true);
+        }
+
+        (new FastExcel($produks))->export($filePath);
+
+        return response()->download($filePath)->deleteFileAfterSend(true);
+    }
+
+    public function importUpdate(Request $request)
+    {
+        $request->validate([
+            'file_edit_produk' => 'required|file|mimes:xlsx,xls|max:5120',
+        ]);
+
+        $fullPath = $request->file('file_edit_produk')->getRealPath();
+
+        (new FastExcel)->import($fullPath, function ($row) {
+            $id = $row['id'] ?? null;
+            $sku = $row['sku'] ?? null;
+
+            if (empty($id) && empty($sku)) {
+                return null;
+            }
+
+            $produk = null;
+
+            if (!empty($id)) {
+                $produk = Produk::find($id);
+            }
+
+            if (!$produk && !empty($sku)) {
+                $produk = Produk::where('sku', $sku)->first();
+            }
+
+            if (!$produk) {
+                return null;
+            }
+
+            $produk->update([
+                'tipe_produk'      => $row['tipe_produk'] ?? $produk->tipe_produk,
+                'nama_produk'      => $row['nama_produk'] ?? $produk->nama_produk,
+                'nama_pabrik'      => $row['nama_pabrik'] ?? $produk->nama_pabrik,
+                'sku'              => $row['sku'] ?? $produk->sku,
+                'barcode'          => $row['barcode'] ?? $produk->barcode,
+                'pajak'            => $row['pajak'] ?? $produk->pajak,
+                'satuan_utama'     => $row['satuan_utama'] ?? $produk->satuan_utama,
+                'harga_beli'       => is_numeric($row['harga_beli'] ?? null) ? $row['harga_beli'] : $produk->harga_beli,
+                'harga_jual'       => is_numeric($row['harga_jual'] ?? null) ? $row['harga_jual'] : $produk->harga_jual,
+                'stok_minimal'     => is_numeric($row['stok_minimal'] ?? null) ? $row['stok_minimal'] : $produk->stok_minimal,
+                'stok_maksimal'    => is_numeric($row['stok_maksimal'] ?? null) ? $row['stok_maksimal'] : $produk->stok_maksimal,
+                'rak_penyimpanan'  => $row['rak_penyimpanan'] ?? $produk->rak_penyimpanan,
+                'status_penjualan' => $row['status_penjualan'] ?? $produk->status_penjualan,
+                'catatan'          => $row['catatan'] ?? $produk->catatan,
+            ]);
+
+            return $produk; 
+        });
+
+        return redirect()
+            ->route('masterdata.masterproduk')
+            ->with('success', 'Produk berhasil diperbarui secara massal.');
     }
 }
