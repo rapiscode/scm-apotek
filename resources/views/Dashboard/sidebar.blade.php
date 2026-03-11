@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'FinBank')</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -215,11 +216,6 @@
                     <a href="{{ route('masterdata.masterproduk') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Master Produk
-                    </a>
-
-                    <a href="{{ route('masterdata.masterkategori') }}"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Master Kategori
                     </a>
 
                     <a href="{{ route('masterdata.mastersatuan') }}"

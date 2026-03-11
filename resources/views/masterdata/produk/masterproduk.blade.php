@@ -67,12 +67,13 @@
                         <span id="filterCountBadge" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs font-semibold">0</span>
                     </button>
 
-                    <button
-                        type="button"
-                        class="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                    <a
+                        href="{{ route('masterdata.masterproduk.download') }}"
+                        class="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 inline-flex items-center justify-center"
+                        title="Unduh Data Produk"
                     >
                         <i class="fas fa-download"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -100,7 +101,7 @@
                 <div class="overflow-x-auto overflow-y-auto flex-1">
                     <table class="min-w-[1900px] w-full text-sm">
                         <thead class="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
-                            <tr class="produk-row border-t border-gray-100 dark:border-gray-800">
+                            <tr>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap w-16">No.</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[300px]">Nama</th>
                                 <th class="text-left px-4 py-3 font-semibold whitespace-nowrap min-w-[150px]">Kode Produk (SKU)</th>
@@ -205,12 +206,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-4 py-4 text-sm text-gray-700 dark:text-gray-200">
                     <div class="flex items-center justify-between">
                         <span>Produk Dijual</span>
-                        <span>: 0 produk</span>
+                        <span>: {{ $produkStats->dijual ?? 0 }} produk</span>
                     </div>
 
                     <div class="flex items-center justify-between">
                         <span>Produk Tidak Dijual</span>
-                        <span>: 0 produk</span>
+                        <span>: {{ $produkStats->tidak_dijual ?? 0 }} produk</span>
                     </div>
                 </div>
             </div>
@@ -379,15 +380,19 @@
                                         class="hidden absolute z-[10020] mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden"
                                     >
                                         <div id="satuanUtamaList" class="max-h-56 overflow-y-auto py-1">
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Tablet">Tablet</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Kapsul">Kapsul</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Botol">Botol</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Strip">Strip</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Box">Box</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Tube">Tube</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Ampul">Ampul</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Vial">Vial</button>
-                                            <button type="button" class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Sachet">Sachet</button>
+                                            @forelse ($satuans as $satuan)
+                                                <button
+                                                    type="button"
+                                                    class="satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200"
+                                                    data-value="{{ $satuan->nama_satuan }}"
+                                                >
+                                                    {{ $satuan->nama_satuan }}
+                                                </button>
+                                            @empty
+                                                <div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                    Belum ada data satuan
+                                                </div>
+                                            @endforelse
                                         </div>
                                     </div>
                                 </div>
@@ -620,8 +625,12 @@
     <div id="satuanKemasanOverlay" class="absolute inset-0 bg-black/40"></div>
 
     <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="w-full max-w-[445px] rounded-2xl overflow-hidden shadow-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 transition-colors duration-200">
-            <!-- Header -->
+        <form
+            id="ajaxTambahSatuanForm"
+            class="w-full max-w-[445px] rounded-2xl overflow-hidden shadow-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 transition-colors duration-200"
+        >
+            @csrf
+
             <div class="bg-blue-600 px-6 py-5 flex items-center justify-between">
                 <h3 class="text-2xl font-bold text-white">Tambah Satuan Kemasan</h3>
                 <button
@@ -633,7 +642,6 @@
                 </button>
             </div>
 
-            <!-- Body -->
             <div class="px-6 py-5 space-y-5 bg-white dark:bg-gray-950 transition-colors duration-200">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
@@ -642,8 +650,10 @@
                     <input
                         type="text"
                         id="namaSatuanKemasanInput"
+                        name="nama_satuan"
                         class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors duration-200"
                     >
+                    <p id="satuanKemasanError" class="mt-2 text-sm text-red-500 hidden"></p>
                 </div>
 
                 <div class="rounded-[22px] bg-yellow-400 dark:bg-yellow-500 px-6 py-5 transition-colors duration-200">
@@ -659,7 +669,6 @@
                 </div>
             </div>
 
-            <!-- Footer -->
             <div class="px-6 py-4 border-t border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 flex items-center justify-end gap-3 transition-colors duration-200">
                 <button
                     type="button"
@@ -670,14 +679,14 @@
                 </button>
 
                 <button
-                    type="button"
+                    type="submit"
                     id="saveSatuanKemasanModal"
                     class="px-6 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold transition-colors duration-200"
                 >
                     Simpan
                 </button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -1417,17 +1426,84 @@ document.addEventListener('DOMContentLoaded', function () {
     cancelSatuanKemasanModalBtn?.addEventListener('click', closeSatuanKemasanModal);
     satuanKemasanOverlay?.addEventListener('click', closeSatuanKemasanModal);
 
-    saveSatuanKemasanModalBtn?.addEventListener('click', function () {
+    const ajaxTambahSatuanForm = document.getElementById('ajaxTambahSatuanForm');
+    const satuanKemasanError = document.getElementById('satuanKemasanError');
+
+    ajaxTambahSatuanForm?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
         const value = namaSatuanKemasanInput?.value?.trim();
 
         if (!value) {
             namaSatuanKemasanInput?.focus();
+            if (satuanKemasanError) {
+                satuanKemasanError.textContent = 'Nama satuan wajib diisi.';
+                satuanKemasanError.classList.remove('hidden');
+            }
             return;
         }
 
-        // sementara hanya tutup modal
-        // nanti kalau mau bisa kita sambungkan ke dropdown satuan utama
-        closeSatuanKemasanModal();
+        if (satuanKemasanError) {
+            satuanKemasanError.textContent = '';
+            satuanKemasanError.classList.add('hidden');
+        }
+
+        try {
+            const response = await fetch("{{ route('masterdata.mastersatuan.ajaxStore') }}", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: new FormData(this)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                if (result.errors?.nama_satuan?.length) {
+                    satuanKemasanError.textContent = result.errors.nama_satuan[0];
+                    satuanKemasanError.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const newValue = result.data.nama_satuan;
+
+            const existingOptions = document.querySelectorAll('.satuan-option');
+            const isDuplicate = Array.from(existingOptions).some(option =>
+                option.dataset.value.toLowerCase() === newValue.toLowerCase()
+            );
+
+            if (!isDuplicate) {
+                const newOption = document.createElement('button');
+                newOption.type = 'button';
+                newOption.className = 'satuan-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200';
+                newOption.dataset.value = newValue;
+                newOption.textContent = newValue;
+
+                newOption.addEventListener('click', function () {
+                    if (satuanUtamaSearch) satuanUtamaSearch.value = newValue;
+                    if (satuanUtamaValue) satuanUtamaValue.value = newValue;
+                    closeSatuanDropdown();
+                });
+
+                satuanUtamaList?.appendChild(newOption);
+            }
+
+            if (satuanUtamaSearch) satuanUtamaSearch.value = newValue;
+            if (satuanUtamaValue) satuanUtamaValue.value = newValue;
+
+            filterSatuanOptions('');
+            closeSatuanKemasanModal();
+
+        } catch (error) {
+            if (satuanKemasanError) {
+                satuanKemasanError.textContent = 'Terjadi kesalahan saat menyimpan satuan.';
+                satuanKemasanError.classList.remove('hidden');
+            }
+        }
     });
 
     const checkboxPahamEdit = document.getElementById('checkboxPahamEdit');
@@ -1951,7 +2027,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // SEARCH PRODUK TABLE
     // =========================
     const searchProdukInput = document.getElementById('searchProdukInput');
-    const produkRows = document.querySelectorAll('.produk-row');
+    const produkRows = document.querySelectorAll('#produkTableBody .produk-row');
     const produkTableBody = document.getElementById('produkTableBody');
 
     function createSearchEmptyRow() {
@@ -2041,13 +2117,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedStatus = filterStatus?.value || '';
         const selectedRak = filterRak?.value || '';
 
-        const rows = document.querySelectorAll('.produk-row');
+        const produkRows = document.querySelectorAll('#produkTableBody .produk-row');
         let visibleCount = 0;
 
         removeFilterEmptyRow();
 
-        rows.forEach((row) => {
-
+        produkRows.forEach((row) => {
             const rowText = row.textContent.toLowerCase();
             const rowStatus = row.dataset.status || '';
             const rowRak = row.dataset.rak || '';
@@ -2063,7 +2138,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isVisible) {
                 visibleCount++;
             }
-
         });
 
         if (visibleCount === 0) {

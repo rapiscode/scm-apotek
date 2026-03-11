@@ -6,6 +6,7 @@ use App\Models\Produk;
 use Illuminate\Http\Request;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Satuan;
 
 
 class ProdukController extends Controller
@@ -14,7 +15,20 @@ class ProdukController extends Controller
     {
         $produks = Produk::latest()->get();
 
-        return view('masterdata.produk.masterproduk', compact('produks'));
+        $produkStats = Produk::selectRaw("
+            COUNT(CASE WHEN status_penjualan = 'dijual' THEN 1 END) as dijual,
+            COUNT(CASE WHEN status_penjualan = 'tidak_dijual' THEN 1 END) as tidak_dijual
+        ")->first();
+
+        $satuans = Satuan::where('status', 'aktif')
+            ->orderBy('nama_satuan')
+            ->get();
+
+        return view('masterdata.produk.masterproduk', compact(
+            'produks',
+            'produkStats',
+            'satuans'
+        ));
     }
 
     public function store(Request $request)
@@ -265,5 +279,61 @@ class ProdukController extends Controller
         return redirect()
             ->route('masterdata.masterproduk')
             ->with('success', 'Produk berhasil diperbarui secara massal.');
+    }
+
+    public function downloadAllProduk()
+    {
+        $produks = Produk::select([
+            'id',
+            'tipe_produk',
+            'nama_produk',
+            'nama_pabrik',
+            'sku',
+            'barcode',
+            'pajak',
+            'satuan_utama',
+            'harga_beli',
+            'harga_jual',
+            'stok_minimal',
+            'stok_maksimal',
+            'rak_penyimpanan',
+            'status_penjualan',
+            'catatan',
+            'created_at',
+            'updated_at',
+        ])->get()->map(function ($produk) {
+            return [
+                'ID' => $produk->id,
+                'Tipe Produk' => $produk->tipe_produk,
+                'Nama Produk' => $produk->nama_produk,
+                'Nama Pabrik' => $produk->nama_pabrik,
+                'SKU' => $produk->sku,
+                'Barcode' => $produk->barcode,
+                'Pajak' => $produk->pajak,
+                'Satuan Utama' => $produk->satuan_utama,
+                'Harga Beli' => $produk->harga_beli,
+                'Harga Jual' => $produk->harga_jual,
+                'Stok Minimal' => $produk->stok_minimal,
+                'Stok Maksimal' => $produk->stok_maksimal,
+                'Rak Penyimpanan' => $produk->rak_penyimpanan,
+                'Status Penjualan' => $produk->status_penjualan,
+                'Catatan' => $produk->catatan,
+                'Dibuat Pada' => optional($produk->created_at)->format('Y-m-d H:i:s'),
+                'Diubah Pada' => optional($produk->updated_at)->format('Y-m-d H:i:s'),
+            ];
+        });
+
+        $fileName = 'master_produk_' . now()->format('Ymd_His') . '.xlsx';
+        $tempDir = storage_path('app/temp');
+
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $filePath = $tempDir . DIRECTORY_SEPARATOR . $fileName;
+
+        (new FastExcel($produks))->export($filePath);
+
+        return response()->download($filePath)->deleteFileAfterSend(true);
     }
 }

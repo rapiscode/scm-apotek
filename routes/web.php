@@ -6,6 +6,7 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProdukController;
+use App\Http\Controllers\SatuanController;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.process');
@@ -25,8 +26,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/master-data/master-produk/template/download', [ProdukController::class, 'downloadTemplate'])
         ->name('masterdata.masterproduk.template.download');
+
     Route::post('/master-data/master-produk/import', [ProdukController::class, 'import'])
     ->name('masterdata.masterproduk.import');
+
+    Route::get('/master-data/master-produk/download', [ProdukController::class, 'downloadAllProduk'])
+    ->name('masterdata.masterproduk.download');
 
     Route::get('/master-data/master-produk/export', [ProdukController::class, 'exportEditTemplate'])
     ->name('masterdata.masterproduk.export');
@@ -37,13 +42,13 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/master-data/master-produk/{produk}', [ProdukController::class, 'update'])->name('masterdata.masterproduk.update');
     Route::delete('/master-data/master-produk/{produk}', [ProdukController::class, 'destroy'])->name('masterdata.masterproduk.destroy');
 
-    Route::get('/master-data/master-kategori', function () {
-        return view('masterdata.masterkategori');
-    })->name('masterdata.masterkategori');
+    Route::get('/master-data/master-satuan', [SatuanController::class, 'index'])->name('masterdata.mastersatuan');
+    Route::post('/master-data/master-satuan', [SatuanController::class, 'store'])->name('masterdata.mastersatuan.store');
+    Route::put('/master-data/master-satuan/{satuan}', [SatuanController::class, 'update'])->name('masterdata.mastersatuan.update');
+    Route::delete('/master-data/master-satuan/{satuan}', [SatuanController::class, 'destroy'])->name('masterdata.mastersatuan.destroy');
 
-    Route::get('/master-data/master-satuan', function () {
-        return view('masterdata.mastersatuan');
-    })->name('masterdata.mastersatuan');
+    Route::post('/master-data/master-satuan/ajax-store', [SatuanController::class, 'ajaxStore'])
+        ->name('masterdata.mastersatuan.ajaxStore');
 
     Route::get('/master-data/master-rak', function () {
         return view('masterdata.masterrak');
