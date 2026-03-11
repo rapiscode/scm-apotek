@@ -126,29 +126,38 @@ class ProdukController extends Controller
         $file = $request->file('file_import');
         $path = $file->storeAs('temp', $file->getClientOriginalName());
 
-        (new FastExcel)->startRow(2)->sheet(2)->import(storage_path('app/private/' . $path), function ($row) {
-            if (empty($row['sku']) || empty($row['nama_produk'])) {
+        $rowNumber = 0;
+
+        (new FastExcel)->startRow(1)->sheet(2)->import(storage_path('app/private/' . $path), function ($row) use (&$rowNumber) {
+            $rowNumber++;
+
+            // Skip baris pertama (baris contoh)
+            if ($rowNumber === 1) {
                 return null;
             }
 
-            if (Produk::where('sku', $row['sku'])->exists()) {
+            if (empty($row['sku *']) || empty($row['nama_produk *'])) {
+                return null;
+            }
+
+            if (Produk::where('sku', $row['sku *'])->exists()) {
                 return null;
             }
 
             return Produk::create([
-                'tipe_produk'      => $row['tipe_produk'] ?? 'umum',
-                'nama_produk'      => $row['nama_produk'],
+                'tipe_produk'      => $row['tipe_produk *'] ?? 'umum',
+                'nama_produk'      => $row['nama_produk *'],
                 'nama_pabrik'      => $row['nama_pabrik'] ?? null,
-                'sku'              => $row['sku'],
+                'sku'              => $row['sku *'],
                 'barcode'          => $row['barcode'] ?? null,
                 'pajak'            => $row['pajak'] ?? null,
-                'satuan_utama'     => $row['satuan_utama'],
+                'satuan_utama'     => $row['satuan_utama *'],
                 'harga_beli'       => $row['harga_beli'] ?? 0,
                 'harga_jual'       => $row['harga_jual'] ?? 0,
                 'stok_minimal'     => $row['stok_minimal'] ?? 0,
                 'stok_maksimal'    => $row['stok_maksimal'] ?? 0,
                 'rak_penyimpanan'  => $row['rak_penyimpanan'] ?? null,
-                'status_penjualan' => $row['status_penjualan'] ?? 'dijual',
+                'status_penjualan' => $row['status_penjualan *'] ?? 'dijual',
                 'catatan'          => $row['catatan'] ?? null,
             ]);
         });
