@@ -534,12 +534,19 @@
                                                 class="hidden absolute z-[10020] mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden"
                                             >
                                                 <div id="rakPenyimpananList" class="max-h-56 overflow-y-auto py-1">
-                                                    <button type="button" class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Rak A1">Rak A1</button>
-                                                    <button type="button" class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Rak A2">Rak A2</button>
-                                                    <button type="button" class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Rak B1">Rak B1</button>
-                                                    <button type="button" class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Rak B2">Rak B2</button>
-                                                    <button type="button" class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Rak Gudang">Rak Gudang</button>
-                                                    <button type="button" class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200" data-value="Rak Etalase">Rak Etalase</button>
+                                                    @forelse ($raks as $rak)
+                                                        <button
+                                                            type="button"
+                                                            class="rak-option w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200"
+                                                            data-value="{{ $rak->nama_rak }}"
+                                                        >
+                                                            {{ $rak->nama_rak }}
+                                                        </button>
+                                                    @empty
+                                                        <div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                            Belum ada data rak
+                                                        </div>
+                                                    @endforelse
                                                 </div>
                                             </div>
                                         </div>

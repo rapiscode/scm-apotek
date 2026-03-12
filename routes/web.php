@@ -7,6 +7,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\SatuanController;
+use App\Http\Controllers\RakController;
+use App\Http\Controllers\GudangController;
+use App\Http\Controllers\Persediaan\DaftarProdukController;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.process');
@@ -50,13 +53,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/master-data/master-satuan/ajax-store', [SatuanController::class, 'ajaxStore'])
         ->name('masterdata.mastersatuan.ajaxStore');
 
-    Route::get('/master-data/master-rak', function () {
-        return view('masterdata.masterrak');
-    })->name('masterdata.masterrak');
+    Route::get('/master-data/master-rak', [RakController::class, 'index'])->name('masterdata.masterrak');
+    Route::post('/master-data/master-rak', [RakController::class, 'store'])->name('masterdata.masterrak.store');
+    Route::put('/master-data/master-rak/{rak}', [RakController::class, 'update'])->name('masterdata.masterrak.update');
+    Route::delete('/master-data/master-rak/{rak}', [RakController::class, 'destroy'])->name('masterdata.masterrak.destroy');
 
-    Route::get('/master-data/master-gudang', function () {
-        return view('masterdata.mastergudang');
-    })->name('masterdata.mastergudang');
+    Route::get('/master-data/master-gudang', [GudangController::class, 'index'])->name('masterdata.mastergudang');
+    Route::post('/master-data/master-gudang', [GudangController::class, 'store'])->name('masterdata.mastergudang.store');
+    Route::put('/master-data/master-gudang/{gudang}', [GudangController::class, 'update'])->name('masterdata.mastergudang.update');
+    Route::delete('/master-data/master-gudang/{gudang}', [GudangController::class, 'destroy'])->name('masterdata.mastergudang.destroy');
+
+    Route::get('/persediaan/daftar-produk', [DaftarProdukController::class, 'index'])
+    ->name('persediaan.daftarproduk');
+
+    Route::post('/persediaan/daftar-produk', [DaftarProdukController::class, 'store'])
+        ->name('persediaan.daftarproduk.store');
 
     Route::prefix('control-user')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');

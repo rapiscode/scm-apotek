@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Satuan;
+use App\Models\Rak;
 
 
 class ProdukController extends Controller
@@ -24,10 +25,15 @@ class ProdukController extends Controller
             ->orderBy('nama_satuan')
             ->get();
 
+        $raks = Rak::where('status', 'aktif')
+            ->orderBy('nama_rak')
+            ->get();
+
         return view('masterdata.produk.masterproduk', compact(
             'produks',
             'produkStats',
-            'satuans'
+            'satuans',
+            'raks'
         ));
     }
 

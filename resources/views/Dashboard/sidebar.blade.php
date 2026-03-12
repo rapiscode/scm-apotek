@@ -127,14 +127,9 @@
                     id="persediaanDropdown"
                     class="hidden mt-2 bg-gray-50 dark:bg-gray-900 rounded-2xl p-3 space-y-1 transition-colors duration-200"
                 >
-                    <a href="#"
+                    <a href="{{ route('persediaan.daftarproduk') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Daftar Produk
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Defecta
                     </a>
 
                     <a href="#"
@@ -523,6 +518,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 @stack('scripts')
 </body>
