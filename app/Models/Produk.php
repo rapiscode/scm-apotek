@@ -18,10 +18,16 @@ class Produk extends Model
         'satuan_utama',
         'harga_beli',
         'harga_jual',
+        'stok',
         'stok_minimal',
         'stok_maksimal',
         'rak_penyimpanan',
         'status_penjualan',
         'catatan',
     ];
+
+    public function penyesuaianStoks()
+    {
+        return $this->hasMany(PenyesuaianStok::class, 'produk_id');
+    }
 }

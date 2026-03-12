@@ -142,14 +142,14 @@
                         Stok Opname
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('persediaan.stokproduk') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Penyesuaian Stok
+                        Stok Produk
                     </a>
 
                     <a href="#"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Perpindahan Stok
+                        Gudang Penyimpanan
                     </a>
                 </div>
             </div>

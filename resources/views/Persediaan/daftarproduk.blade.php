@@ -145,7 +145,7 @@
                                     </td>
 
                                     <td class="px-4 py-4 text-center align-top text-gray-700 dark:text-gray-200">
-                                        {{ $produk->stok_minimal ?? 0 }} 
+                                        {{ $produk->stok ?? 0 }}
                                     </td>
 
                                     <td class="px-4 py-4 text-center align-top text-gray-400">
@@ -601,7 +601,7 @@
 <div id="cetakBarcodeDrawer" class="fixed inset-0 z-[10050] hidden bg-white">
     <div class="h-full flex flex-col">
         <!-- Header -->
-        <div class="bg-blue-600 text-white px-5 py-4 flex items-center justify-between shrink-0">
+        <div id="barcodeDrawerHeader" class="bg-blue-600 text-white px-5 py-4 flex items-center justify-between shrink-0">
             <button
                 type="button"
                 id="closeCetakBarcodeDrawer"
@@ -614,6 +614,7 @@
 
             <button
                 type="button"
+                id="openPrintPreviewBtn"
                 class="px-6 py-2 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold"
             >
                 Cetak
@@ -621,7 +622,7 @@
         </div>
 
         <!-- Content -->
-        <div class="flex-1 overflow-auto bg-white">
+        <div id="barcodeConfigView" class="flex-1 overflow-auto bg-white">
             <!-- Filter Atas -->
             <div class="px-5 py-4 border-b border-gray-200">
                 <div class="space-y-4">
@@ -818,6 +819,82 @@
 
                 <!-- Body -->
                 <div id="barcodeTableBody" class="divide-y divide-gray-200"></div>
+            </div>
+        </div>
+
+        <div id="barcodePrintPreviewView"
+            class="hidden absolute inset-0 z-[10060] bg-[#f3f6fb]">
+            <div class="w-full h-full flex flex-col">
+                <!-- Header Preview -->
+                <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between gap-4 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <button
+                            type="button"
+                            id="backToConfigBtn"
+                            class="text-white text-2xl"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+
+                        <h3 class="text-2xl font-bold">Cetak Barcode</h3>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div>
+                            <label class="block text-[11px] text-white/80 mb-1">Lebar Barcode</label>
+                            <input
+                                type="number"
+                                id="barcodeWidthInput"
+                                value="1.2"
+                                step="0.1"
+                                class="w-48 rounded-lg border border-white/30 bg-white text-gray-700 px-3 py-2 text-sm"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-white/80 mb-1">Tinggi Barcode</label>
+                            <input
+                                type="number"
+                                id="barcodeHeightInput"
+                                value="30"
+                                step="1"
+                                class="w-48 rounded-lg border border-white/30 bg-white text-gray-700 px-3 py-2 text-sm"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-white/80 mb-1">Ukuran Text</label>
+                            <input
+                                type="number"
+                                id="barcodeFontSizeInput"
+                                value="10"
+                                step="1"
+                                class="w-44 rounded-lg border border-white/30 bg-white text-gray-700 px-3 py-2 text-sm"
+                            >
+                        </div>
+
+                        <button
+                            type="button"
+                            id="resetBarcodePreviewBtn"
+                            class="mt-5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+                        >
+                            Default
+                        </button>
+
+                        <button
+                            type="button"
+                            id="printBarcodeBtn"
+                            class="mt-5 px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold"
+                        >
+                            Cetak
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Area Preview -->
+                <div id="barcodePrintCanvas"
+                    class="flex-1 p-4 overflow-auto bg-white">
+                </div>
             </div>
         </div>
     </div>
@@ -1656,6 +1733,236 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!clickedInsideSumberKode) {
             closeSumberKodeDropdown();
         }
+    });
+
+    // =========================
+    // PRINT PREVIEW BARCODE
+    // =========================
+    const openPrintPreviewBtn = document.getElementById('openPrintPreviewBtn');
+    const backToConfigBtn = document.getElementById('backToConfigBtn');
+    const barcodeConfigView = document.getElementById('barcodeConfigView');
+    const barcodePrintPreviewView = document.getElementById('barcodePrintPreviewView');
+    const barcodePrintCanvas = document.getElementById('barcodePrintCanvas');
+
+    const barcodeWidthInput = document.getElementById('barcodeWidthInput');
+    const barcodeHeightInput = document.getElementById('barcodeHeightInput');
+    const barcodeFontSizeInput = document.getElementById('barcodeFontSizeInput');
+    const resetBarcodePreviewBtn = document.getElementById('resetBarcodePreviewBtn');
+    const printBarcodeBtn = document.getElementById('printBarcodeBtn');
+
+    function getSelectedBarcodeRowsData() {
+        const rows = barcodeTableBody.querySelectorAll('.barcode-selected-row');
+
+        return Array.from(rows).map((row) => ({
+            id: row.dataset.id,
+            nama: row.dataset.nama,
+            satuan: row.dataset.satuan,
+            harga: Number(row.dataset.harga || 0),
+            barcode: row.dataset.barcode,
+            sku: row.dataset.sku
+        }));
+    }
+
+    function buildPrintPreviewItems() {
+        const items = getSelectedBarcodeRowsData();
+        const showNamaProduk = document.getElementById('showNamaProduk')?.checked;
+        const showNamaOutlet = document.getElementById('showNamaOutlet')?.checked;
+        const showTeksKode = document.getElementById('showTeksKode')?.checked;
+        const showHargaProduk = document.getElementById('showHargaProduk')?.checked;
+        const showSatuan = document.getElementById('showSatuan')?.checked;
+
+        if (!barcodePrintCanvas) return;
+
+        if (items.length === 0) {
+            barcodePrintCanvas.innerHTML = `
+                <div class="text-sm text-gray-500">Belum ada barcode yang dipilih.</div>
+            `;
+            return;
+        }
+
+        barcodePrintCanvas.innerHTML = items.map((produk, index) => {
+            const barcodeValue = (produk.barcode && String(produk.barcode).trim() !== '')
+                ? String(produk.barcode).trim()
+                : String(produk.sku || '').trim();
+
+            return `
+                <div class="inline-flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-3 mr-4 mb-4 shadow-sm">
+                    ${showNamaProduk ? `<div class="text-[10px] text-center text-gray-700 mb-1">${produk.nama}</div>` : ''}
+                    ${showNamaOutlet ? `<div class="text-[9px] text-center text-gray-500 mb-1">Apotek Saya</div>` : ''}
+                    <svg
+                        class="barcode-print-svg"
+                        data-barcode-value="${barcodeValue}"
+                        data-barcode-index="${index}"
+                    ></svg>
+                    ${showTeksKode ? `<div class="text-[9px] text-center text-gray-700 mt-1">${barcodeValue}</div>` : ''}
+                    ${showHargaProduk ? `<div class="text-[10px] text-center text-gray-700 mt-1">Rp ${formatRupiah(produk.harga)}</div>` : ''}
+                    ${showSatuan ? `<div class="text-[9px] text-center text-gray-500 mt-1">${produk.satuan || '-'}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        renderPrintPreviewBarcodes();
+    }
+
+    function renderPrintPreviewBarcodes() {
+        const width = parseFloat(barcodeWidthInput?.value || 1.2);
+        const height = parseInt(barcodeHeightInput?.value || 30);
+        const fontSize = parseInt(barcodeFontSizeInput?.value || 10);
+
+        document.querySelectorAll('.barcode-print-svg').forEach((el) => {
+            const value = el.dataset.barcodeValue || '';
+
+            if (!value) return;
+
+            try {
+                JsBarcode(el, value, {
+                    format: 'CODE128',
+                    width: width,
+                    height: height,
+                    displayValue: false,
+                    margin: 0,
+                    fontSize: fontSize
+                });
+            } catch (error) {
+                el.outerHTML = '<div class="text-xs text-red-500">Barcode tidak valid</div>';
+            }
+        });
+    }
+
+    const barcodeDrawerHeader = document.getElementById('barcodeDrawerHeader');
+
+    function openBarcodePrintPreview() {
+        barcodeDrawerHeader?.classList.add('hidden');
+        barcodeConfigView?.classList.add('hidden');
+        barcodePrintPreviewView?.classList.remove('hidden');
+        buildPrintPreviewItems();
+    }
+
+    function closeBarcodePrintPreview() {
+        barcodePrintPreviewView?.classList.add('hidden');
+        barcodeConfigView?.classList.remove('hidden');
+        barcodeDrawerHeader?.classList.remove('hidden');
+    }
+
+    openPrintPreviewBtn?.addEventListener('click', openBarcodePrintPreview);
+    backToConfigBtn?.addEventListener('click', closeBarcodePrintPreview);
+
+    [barcodeWidthInput, barcodeHeightInput, barcodeFontSizeInput].forEach((input) => {
+        input?.addEventListener('input', renderPrintPreviewBarcodes);
+    });
+
+    resetBarcodePreviewBtn?.addEventListener('click', function () {
+        if (barcodeWidthInput) barcodeWidthInput.value = 1.2;
+        if (barcodeHeightInput) barcodeHeightInput.value = 30;
+        if (barcodeFontSizeInput) barcodeFontSizeInput.value = 10;
+        renderPrintPreviewBarcodes();
+    });
+
+    function printBarcodeOnly() {
+        const preview = document.getElementById('barcodePrintCanvas');
+        if (!preview) return;
+
+        const existingFrame = document.getElementById('barcode-print-frame');
+        if (existingFrame) {
+            existingFrame.remove();
+        }
+
+        const printFrame = document.createElement('iframe');
+        printFrame.id = 'barcode-print-frame';
+        printFrame.style.position = 'fixed';
+        printFrame.style.right = '0';
+        printFrame.style.bottom = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = '0';
+        printFrame.style.visibility = 'hidden';
+
+        document.body.appendChild(printFrame);
+
+        const frameDoc = printFrame.contentWindow.document;
+
+        frameDoc.open();
+        frameDoc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Cetak Barcode</title>
+                <style>
+                    * {
+                        box-sizing: border-box;
+                    }
+
+                    html, body {
+                        margin: 0;
+                        padding: 0;
+                        background: white;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    body {
+                        padding: 10px;
+                    }
+
+                    .print-area {
+                        display: flex;
+                        flex-wrap: wrap;
+                        align-items: flex-start;
+                        gap: 12px;
+                    }
+
+                    .print-area > * {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
+
+                    svg {
+                        display: block;
+                        max-width: 100%;
+                    }
+
+                    @page {
+                        margin: 8mm;
+                        size: auto;
+                    }
+
+                    @media print {
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            background: white;
+                        }
+
+                        body {
+                            padding: 10px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-area">
+                    ${preview.innerHTML}
+                </div>
+            </body>
+            </html>
+        `);
+        frameDoc.close();
+
+        printFrame.onload = function () {
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+            }, 300);
+
+            printFrame.contentWindow.onafterprint = function () {
+                setTimeout(() => {
+                    printFrame.remove();
+                }, 200);
+            };
+        };
+    }
+
+    printBarcodeBtn?.addEventListener('click', function () {
+        printBarcodeOnly();
     });
 
     // =========================
