@@ -2,65 +2,108 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Produk;
+use App\Models\Penjualan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Sample data - replace with your actual database queries
-        $totalBalance = 80201.50;
-        
-        $recentTransactions = [
-            [
-                'type' => 'Paypal - Received',
-                'date' => '28 January 2025, 09:20 AM',
-                'amount' => 8200.00,
-                'status' => 'received',
-                'icon' => 'paypal'
-            ],
-            [
-                'type' => 'Spotify Premium',
-                'date' => '19 December 2025, 07:55 PM',
-                'amount' => -179.00,
-                'status' => 'paid',
-                'icon' => 'spotify'
-            ],
-            [
-                'type' => 'Transferwise - Received',
-                'date' => '17 December 2025, 11:14 AM',
-                'amount' => 1200.00,
-                'status' => 'received',
-                'icon' => 'transferwise'
-            ],
-            [
-                'type' => 'H&M Payment',
-                'date' => '15 December 2025, 04:30 PM',
-                'amount' => -2200.00,
-                'status' => 'paid',
-                'icon' => 'hm'
-            ]
+        $totalPenjualan = Penjualan::where('status', '!=', 'draft')->sum('total_penjualan');
+        $returPenjualan = 0;
+        $penjualanTertolak = 0;
+
+        $databasePelanggan = 0;
+        $databaseSupplier = 0;
+        $databaseProduk = Produk::count();
+        $databaseDokter = 0;
+
+        $berpotensiRugi = 1;
+        $stokNegatif = 0;
+        $dekatKadaluarsa = 1;
+        $sudahKadaluarsa = 0;
+
+        $tipeProdukChart = [
+            'Obat' => Produk::where('tipe_produk', 'Obat')->count(),
+            'Alkes' => Produk::where('tipe_produk', 'Alkes')->count(),
+            'Umum' => Produk::where('tipe_produk', 'Umum')->count(),
         ];
 
-        $expensesData = [
-            'percentage' => 85.5,
-            'level' => 'Normal Level',
-            'total' => 1800.80
+        // =========================
+        // GRAFIK 7 HARI TERAKHIR BERDASARKAN JAM
+        // =========================
+        $jamLabels = [];
+        $jamData = [];
+
+        for ($i = 0; $i < 24; $i++) {
+            $jamLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT) . ':00';
+
+            $jumlah = Penjualan::where('status', '!=', 'draft')
+                ->whereDate('created_at', '>=', now()->subDays(6)->toDateString())
+                ->whereRaw('HOUR(created_at) = ?', [$i])
+                ->count();
+
+            $jamData[] = $jumlah;
+        }
+
+        // =========================
+        // GRAFIK 4 PEKAN TERAKHIR BERDASARKAN HARI
+        // =========================
+        $hariOrder = [
+            'Monday' => 'Sen',
+            'Tuesday' => 'Sel',
+            'Wednesday' => 'Rab',
+            'Thursday' => 'Kam',
+            'Friday' => 'Jum',
+            'Saturday' => 'Sab',
+            'Sunday' => 'Min',
         ];
 
-        $cardInfo = [
-            'number' => '4771 4080 1080 7889',
-            'valid_thru' => '08/25',
-            'type' => 'Platinum Debit',
-            'frozen' => false
+        $hariDataMap = [
+            'Sen' => 0,
+            'Sel' => 0,
+            'Rab' => 0,
+            'Kam' => 0,
+            'Jum' => 0,
+            'Sab' => 0,
+            'Min' => 0,
         ];
 
-        return view('dashboard.index', compact(
-            'totalBalance',
-            'recentTransactions',
-            'expensesData',
-            'cardInfo'
+        $penjualan4Pekan = Penjualan::where('status', '!=', 'draft')
+            ->whereDate('created_at', '>=', now()->subWeeks(4)->toDateString())
+            ->get();
+
+        foreach ($penjualan4Pekan as $item) {
+            $namaHariEn = Carbon::parse($item->created_at)->format('l');
+            $namaHariId = $hariOrder[$namaHariEn] ?? null;
+
+            if ($namaHariId) {
+                $hariDataMap[$namaHariId]++;
+            }
+        }
+
+        $hariLabels = array_keys($hariDataMap);
+        $hariData = array_values($hariDataMap);
+
+        return view('Dashboard.index', compact(
+            'totalPenjualan',
+            'returPenjualan',
+            'penjualanTertolak',
+            'databasePelanggan',
+            'databaseSupplier',
+            'databaseProduk',
+            'databaseDokter',
+            'berpotensiRugi',
+            'stokNegatif',
+            'dekatKadaluarsa',
+            'sudahKadaluarsa',
+            'tipeProdukChart',
+            'jamLabels',
+            'jamData',
+            'hariLabels',
+            'hariData'
         ));
     }
 }

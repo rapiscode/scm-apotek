@@ -82,31 +82,19 @@
                         Kasir
                     </a>
 
-                    <a href="#"
-                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        <span>Pesanan Penjualan</span>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">BETA</span>
-                    </a>
-
-                    <a href="#"
+                    <a href="{{ route('penjualan.daftarpenjualan') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Daftar Penjualan
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('penjualan.tertunda') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Retur Penjualan
+                        Penjualan Tertunda
                     </a>
 
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Penjualan Tertolak
-                    </a>
-
-                    <a href="#"
+                    <a href="{{ route('penjualan.qris') }}"
                     class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         <span>QRIS</span>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">BETA</span>
                     </a>
                 </div>
             </div>
@@ -203,25 +191,21 @@
                     id="pusatBantuanDropdown"
                     class="hidden mt-2 bg-gray-50 dark:bg-gray-900 rounded-2xl p-3 space-y-1 transition-colors duration-200"
                 >
-                    <a href="#"
+                    <a href="{{ route('pusatbantuan.fiturbaru') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Usulkan Fitur Baru
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('pusatbantuan.riwayatupdate') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Riwayat Update
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('pusatbantuan.mintabantuan') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Minta Bantuan
                     </a>
 
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Migrasi Data
-                    </a>
                 </div>
             </div>
 
@@ -262,12 +246,12 @@
         </nav>
 
         <div class="p-6 border-t border-gray-100 dark:border-gray-800 transition-colors duration-200">
-            <a href="#" class="flex items-center py-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 group transition-colors duration-200">
+            <a href="{{ route('settings.index') }}" class="flex items-center py-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 group transition-colors duration-200">
                 <i class="fas fa-cog w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                 <span>Settings</span>
             </a>
 
-            <a href="#" class="flex items-center py-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 group transition-colors duration-200">
+            <a href="{{ route('helpcenter.index') }}" class="flex items-center py-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 group transition-colors duration-200">
                 <i class="fas fa-question-circle w-5 mr-3 shrink-0 group-hover:text-blue-600"></i>
                 <span>Help Center</span>
             </a>
@@ -473,10 +457,71 @@ document.addEventListener('DOMContentLoaded', function () {
         userMgmtDropdown?.classList.remove('hidden');
         userMgmtArrow?.classList.add('rotate-180');
     }
+
+    if (window.location.pathname.includes('/pusat-bantuan')) {
+        pusatBantuanDropdown?.classList.remove('hidden');
+        pusatBantuanArrow?.classList.add('rotate-180');
+    }
+
+    const ctx = document.getElementById('tipeProdukChart');
+
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Obat', 'Alkes', 'Umum'],
+            datasets: [{
+                data: [
+                    {{ $tipeProdukChart['Obat'] ?? 0 }},
+                    {{ $tipeProdukChart['Alkes'] ?? 0 }},
+                    {{ $tipeProdukChart['Umum'] ?? 0 }}
+                ],
+                backgroundColor: [
+                    '#ffd9df',
+                    '#d8ebff',
+                    '#ffe8a3'
+                ],
+                borderColor: [
+                    '#ff6384',
+                    '#4da3ff',
+                    '#f4b400'
+                ],
+                borderWidth: 1.5,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '48%',
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    labels: {
+                        boxWidth: 16,
+                        color: '#6b7280',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.raw;
+                        }
+                    }
+                }
+            }
+        }
+    });
 });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 @stack('scripts')
 </body>

@@ -86,12 +86,16 @@
                 <div class="flex flex-col gap-4 w-full">
 
                     <button
+                        type="button"
+                        id="openPembayaranModalBtn"
                         class="w-full h-28 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-xl shadow-md transition"
                     >
                         Bayar
                     </button>
 
                     <button
+                        type="button"
+                        id="btnTundaTransaksi"
                         class="w-full h-28 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl shadow-md transition"
                     >
                         Tunda
@@ -103,11 +107,142 @@
 
         </div>
     </div>
+
+    <!-- Modal Pembayaran -->
+    <div id="pembayaranModal" class="fixed inset-0 z-[9999] hidden">
+        <div id="pembayaranOverlay" class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
+
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] overflow-hidden">
+                
+                <!-- Header -->
+                <div class="bg-blue-600 px-6 py-4 flex items-center justify-between text-white">
+                    <h3 class="text-2xl font-bold">Pembayaran</h3>
+                    <button type="button" id="closePembayaranModalBtn" class="text-white text-xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <div class="text-blue-700 font-bold text-2xl mb-1">TOTAL</div>
+                        <div id="modalGrandTotalText" class="text-blue-700 font-extrabold text-5xl">
+                            Rp. 0,00
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-5">
+                        <button type="button" class="quick-cash-btn rounded-full border border-blue-400 text-blue-700 font-semibold py-2" data-amount="pas">
+                            Uang Pas
+                        </button>
+                        <button type="button" class="quick-cash-btn rounded-full border border-blue-400 text-blue-700 font-semibold py-2" data-amount="20000">
+                            20.000
+                        </button>
+                        <button type="button" class="quick-cash-btn rounded-full border border-blue-400 text-blue-700 font-semibold py-2" data-amount="50000">
+                            50.000
+                        </button>
+                        <button type="button" class="quick-cash-btn rounded-full border border-blue-400 text-blue-700 font-semibold py-2" data-amount="100000">
+                            100.000
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <label class="text-2xl text-gray-700">Uang Tunai</label>
+                            <input
+                                type="number"
+                                id="uangTunaiInput"
+                                min="0"
+                                value="0"
+                                class="w-52 rounded-xl border border-gray-300 px-4 py-3 text-right text-lg"
+                            >
+                        </div>
+
+                        <div class="text-center pt-4">
+                            <div class="text-red-500 font-bold text-2xl">Pembayaran Kurang</div>
+                            <div id="kembalianText" class="text-gray-800 text-4xl font-medium">
+                                Rp. -0,00
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="border-t px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="w-12 h-12 rounded-xl border border-gray-300 text-gray-600">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button type="button" class="w-12 h-12 rounded-xl border border-gray-300 text-gray-600">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button
+                            type="button"
+                            id="cancelPembayaranModalBtn"
+                            class="px-5 py-3 rounded-xl text-gray-400 font-semibold"
+                        >
+                            Batal
+                        </button>
+
+                        <button
+                            type="button"
+                            id="buatTransaksiBtn"
+                            class="px-6 py-3 rounded-xl bg-teal-400 text-white font-bold"
+                        >
+                            Buat Transaksi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
+
+@php
+    $draftPenjualanData = null;
+
+    if (isset($penjualan) && $penjualan) {
+        $draftPenjualanData = [
+            'id' => $penjualan->id,
+            'status' => $penjualan->status,
+            'items' => $penjualan->details->map(function ($detail) {
+                return [
+                    'id' => $detail->produk->id ?? null,
+                    'nama_produk' => $detail->produk->nama_produk ?? '-',
+                    'sku' => $detail->produk->sku ?? '-',
+                    'barcode' => $detail->produk->barcode ?? '',
+                    'satuan_utama' => $detail->satuan ?? ($detail->produk->satuan_utama ?? 'Pcs'),
+                    'stok' => $detail->produk->stok ?? 0,
+                    'price' => (float) $detail->harga_jual,
+                    'qty' => (int) $detail->qty,
+                ];
+            })->values()->toArray(),
+        ];
+    }
+@endphp
+
 <script>
+const draftPenjualan = @json($draftPenjualanData);
+
 document.addEventListener('DOMContentLoaded', function () {
+    const openPembayaranModalBtn = document.getElementById('openPembayaranModalBtn');
+    const pembayaranModal = document.getElementById('pembayaranModal');
+    const pembayaranOverlay = document.getElementById('pembayaranOverlay');
+    const closePembayaranModalBtn = document.getElementById('closePembayaranModalBtn');
+    const cancelPembayaranModalBtn = document.getElementById('cancelPembayaranModalBtn');
+    const modalGrandTotalText = document.getElementById('modalGrandTotalText');
+    const uangTunaiInput = document.getElementById('uangTunaiInput');
+    const kembalianText = document.getElementById('kembalianText');
+    const quickCashButtons = document.querySelectorAll('.quick-cash-btn');
+    const buatTransaksiBtn = document.getElementById('buatTransaksiBtn');
+    const btnTundaTransaksi = document.getElementById('btnTundaTransaksi');
+
     const searchInput = document.getElementById('produkSearchInput');
     const resultsBox = document.getElementById('produkSearchResults');
     const tbody = document.getElementById('kasirTableBody');
@@ -118,14 +253,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let debounceTimer = null;
     const cart = [];
+    let currentDraftId = draftPenjualan?.id ?? null;
 
     function formatRupiah(number) {
-        const value = Number(number || 0);
-        return value.toLocaleString('id-ID');
+        return Number(number || 0).toLocaleString('id-ID');
+    }
+
+    function getGrandTotal() {
+        return cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
     }
 
     function updateGrandTotal() {
-        const total = cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
+        const total = getGrandTotal();
 
         if (grandTotalText) {
             grandTotalText.textContent = formatRupiah(total) + ',00';
@@ -133,17 +272,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderCart() {
+        if (!tbody) return;
+
         tbody.innerHTML = '';
 
         if (cart.length === 0) {
-            rowsWrapper.classList.add('hidden');
-            emptyState.classList.remove('hidden');
+            rowsWrapper?.classList.add('hidden');
+            emptyState?.classList.remove('hidden');
             updateGrandTotal();
             return;
         }
 
-        rowsWrapper.classList.remove('hidden');
-        emptyState.classList.add('hidden');
+        rowsWrapper?.classList.remove('hidden');
+        emptyState?.classList.add('hidden');
 
         cart.forEach((item, index) => {
             const subtotal = item.qty * item.price;
@@ -234,6 +375,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderSearchResults(items) {
+        if (!resultsBox) return;
+
         if (!items || items.length === 0) {
             resultsBox.innerHTML = `
                 <div class="px-4 py-3 text-sm text-gray-500">
@@ -276,14 +419,122 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function updateKembalian() {
+        const total = getGrandTotal();
+        const uangTunai = Number(uangTunaiInput?.value || 0);
+        const selisih = uangTunai - total;
+
+        if (kembalianText) {
+            const prefix = selisih < 0 ? '-Rp. ' : 'Rp. ';
+            kembalianText.textContent = prefix + formatRupiah(Math.abs(selisih)) + ',00';
+        }
+
+        const labelKurang = document.querySelector('#kembalianText')?.previousElementSibling;
+        if (labelKurang) {
+            labelKurang.textContent = selisih < 0 ? 'Pembayaran Kurang' : 'Kembalian';
+            labelKurang.className = selisih < 0
+                ? 'text-red-500 font-bold text-2xl'
+                : 'text-green-500 font-bold text-2xl';
+        }
+    }
+
+    function openPembayaranModal() {
+        const total = getGrandTotal();
+
+        if (cart.length === 0) {
+            alert('Pilih produk terlebih dahulu.');
+            return;
+        }
+
+        if (modalGrandTotalText) {
+            modalGrandTotalText.textContent = 'Rp. ' + formatRupiah(total) + ',00';
+        }
+
+        if (uangTunaiInput) {
+            uangTunaiInput.value = 0;
+        }
+
+        updateKembalian();
+
+        pembayaranModal?.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closePembayaranModal() {
+        pembayaranModal?.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    async function simpanTransaksi(statusValue) {
+        if (cart.length === 0) {
+            alert('Belum ada produk di transaksi.');
+            return false;
+        }
+
+        const payload = {
+            items: cart.map(item => ({
+                produk_id: item.id,
+                qty: item.qty,
+                satuan: item.satuan_utama,
+                harga_jual: item.price,
+                subtotal: item.qty * item.price,
+            })),
+            total_penjualan: getGrandTotal(),
+            status: statusValue,
+            draft_id: currentDraftId,
+        };
+
+        const response = await fetch(`{{ route('penjualan.kasir.store') }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || 'Gagal menyimpan transaksi');
+        }
+
+        return result;
+    }
+
+    // Event modal pembayaran
+    openPembayaranModalBtn?.addEventListener('click', openPembayaranModal);
+    closePembayaranModalBtn?.addEventListener('click', closePembayaranModal);
+    cancelPembayaranModalBtn?.addEventListener('click', closePembayaranModal);
+    pembayaranOverlay?.addEventListener('click', closePembayaranModal);
+
+    uangTunaiInput?.addEventListener('input', updateKembalian);
+
+    quickCashButtons.forEach((btn) => {
+        btn.addEventListener('click', function () {
+            const total = getGrandTotal();
+            const amount = this.dataset.amount;
+
+            if (amount === 'pas') {
+                uangTunaiInput.value = total;
+            } else {
+                uangTunaiInput.value = Number(amount);
+            }
+
+            updateKembalian();
+        });
+    });
+
+    // Search produk
     searchInput?.addEventListener('input', function () {
         const keyword = this.value.trim();
 
         clearTimeout(debounceTimer);
 
         if (keyword.length < 1) {
-            resultsBox.classList.add('hidden');
-            resultsBox.innerHTML = '';
+            resultsBox?.classList.add('hidden');
+            if (resultsBox) resultsBox.innerHTML = '';
             return;
         }
 
@@ -315,11 +566,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('click', function (e) {
-        if (!resultsBox.contains(e.target) && e.target !== searchInput) {
+        if (resultsBox && !resultsBox.contains(e.target) && e.target !== searchInput) {
             resultsBox.classList.add('hidden');
         }
     });
 
+    // Qty + remove
     tbody?.addEventListener('input', function (e) {
         if (e.target.classList.contains('qty-input')) {
             const index = Number(e.target.dataset.index);
@@ -343,11 +595,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
     clearCartBtn?.addEventListener('click', function () {
         cart.length = 0;
+        currentDraftId = null;
         renderCart();
-        searchInput.value = '';
-        resultsBox.classList.add('hidden');
-        resultsBox.innerHTML = '';
+        if (searchInput) searchInput.value = '';
+        resultsBox?.classList.add('hidden');
+        if (resultsBox) resultsBox.innerHTML = '';
     });
+
+    // Tombol bayar
+    buatTransaksiBtn?.addEventListener('click', async function () {
+        try {
+            await simpanTransaksi('selesai');
+
+            closePembayaranModal();
+            alert('Transaksi berhasil dibuat');
+
+            cart.length = 0;
+            currentDraftId = null;
+            renderCart();
+
+            if (searchInput) searchInput.value = '';
+            resultsBox?.classList.add('hidden');
+            if (resultsBox) resultsBox.innerHTML = '';
+            searchInput?.focus();
+        } catch (error) {
+            alert(error.message || 'Terjadi kesalahan');
+        }
+    });
+
+    // Tombol tunda
+    btnTundaTransaksi?.addEventListener('click', async function () {
+        try {
+            await simpanTransaksi('draft');
+
+            alert('Transaksi berhasil ditunda');
+
+            cart.length = 0;
+            currentDraftId = null;
+            renderCart();
+
+            if (searchInput) searchInput.value = '';
+            resultsBox?.classList.add('hidden');
+            if (resultsBox) resultsBox.innerHTML = '';
+            searchInput?.focus();
+        } catch (error) {
+            alert(error.message || 'Terjadi kesalahan');
+        }
+    });
+
+    // Load draft kalau ada
+    if (draftPenjualan && Array.isArray(draftPenjualan.items) && draftPenjualan.items.length > 0) {
+        draftPenjualan.items.forEach(item => {
+            cart.push({
+                id: Number(item.id),
+                nama_produk: item.nama_produk,
+                sku: item.sku,
+                barcode: item.barcode,
+                satuan_utama: item.satuan_utama || 'Pcs',
+                stok: Number(item.stok || 0),
+                price: Number(item.price || 0),
+                qty: Number(item.qty || 1),
+            });
+        });
+
+        renderCart();
+    }
 });
 </script>
 @endpush

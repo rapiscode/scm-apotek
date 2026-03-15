@@ -17,6 +17,15 @@ use App\Models\Rak;
 use App\Models\StokOpname;
 use App\Models\Gudang;
 use App\Models\GudangProduk;
+use App\Models\Penjualan;
+use App\Models\DetailPenjualan;
+use Illuminate\Support\Facades\DB;
+use Rap2hpoutre\FastExcel\FastExcel;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UsulanFiturMail;
+use App\Mail\MintaBantuanMail;
+
 
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -335,9 +344,208 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
     });
 
-    Route::get('/penjualan/kasir', function () {
-        return view('Penjualan.kasir');
+        Route::get('/penjualan/kasir', function () {
+        $penjualan = null;
+        return view('Penjualan.kasir', compact('penjualan'));
     })->name('penjualan.kasir');
+
+    Route::get('/penjualan/kasir/search-produk', function (Request $request) {
+        $q = trim($request->get('q', ''));
+
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $produks = Produk::query()
+            ->where(function ($query) use ($q) {
+                $query->where('nama_produk', 'like', "%{$q}%")
+                    ->orWhere('sku', 'like', "%{$q}%")
+                    ->orWhere('barcode', 'like', "%{$q}%");
+            })
+            ->orderBy('nama_produk')
+            ->limit(10)
+            ->get([
+                'id',
+                'nama_produk',
+                'sku',
+                'barcode',
+                'harga_jual',
+                'satuan_utama',
+                'stok',
+            ]);
+
+        return response()->json($produks);
+    })->name('penjualan.kasir.search');
+
+    Route::post('/penjualan/kasir/store', function (Request $request) {
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.produk_id' => 'required|exists:produks,id',
+            'items.*.qty' => 'required|integer|min:1',
+            'items.*.satuan' => 'nullable|string',
+            'items.*.harga_jual' => 'required|numeric|min:0',
+            'items.*.subtotal' => 'required|numeric|min:0',
+            'total_penjualan' => 'required|numeric|min:0',
+            'status' => 'required|in:selesai,draft',
+            'draft_id' => 'nullable|exists:penjualans,id',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            if (!empty($validated['draft_id'])) {
+                $draftLama = Penjualan::where('status', 'draft')->find($validated['draft_id']);
+                if ($draftLama) {
+                    $draftLama->delete();
+                }
+            }
+
+            $prefix = $validated['status'] === 'draft' ? 'DRF' : 'SIN';
+
+            $penjualan = Penjualan::create([
+                'no_struk' => $prefix . '-' . now()->format('ymd') . '-' . str_pad((string) (Penjualan::count() + 1), 3, '0', STR_PAD_LEFT),
+                'tanggal' => now(),
+                'pelanggan' => null,
+                'total_penjualan' => $validated['total_penjualan'],
+                'status' => $validated['status'],
+            ]);
+
+            foreach ($validated['items'] as $item) {
+                DetailPenjualan::create([
+                    'penjualan_id' => $penjualan->id,
+                    'produk_id' => $item['produk_id'],
+                    'qty' => $item['qty'],
+                    'satuan' => $item['satuan'] ?? null,
+                    'harga_jual' => $item['harga_jual'],
+                    'subtotal' => $item['subtotal'],
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $validated['status'] === 'draft'
+                    ? 'Transaksi berhasil ditunda'
+                    : 'Transaksi berhasil dibuat',
+                'penjualan_id' => $penjualan->id,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi gagal disimpan',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    })->name('penjualan.kasir.store');
+
+    Route::get('/penjualan/daftar-penjualan', function (Request $request) {
+        $search = $request->get('search');
+        $tanggalAwal = $request->get('tanggal_awal');
+        $tanggalAkhir = $request->get('tanggal_akhir');
+        $statusTransaksi = $request->get('status_transaksi', 'semua');
+
+        $penjualans = Penjualan::with('details.produk')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('no_struk', 'like', '%' . $search . '%')
+                        ->orWhereHas('details.produk', function ($qp) use ($search) {
+                            $qp->where('nama_produk', 'like', '%' . $search . '%');
+                        });
+                });
+            })
+            ->when($tanggalAwal, function ($query) use ($tanggalAwal) {
+                $query->whereDate('tanggal', '>=', $tanggalAwal);
+            })
+            ->when($tanggalAkhir, function ($query) use ($tanggalAkhir) {
+                $query->whereDate('tanggal', '<=', $tanggalAkhir);
+            })
+            ->when($statusTransaksi !== 'semua', function ($query) use ($statusTransaksi) {
+                $query->where('status', $statusTransaksi);
+            })
+            ->where('status', '!=', 'draft')
+            ->latest('tanggal')
+            ->get();
+
+        return view('Penjualan.daftarpenjualan', compact('penjualans'));
+    })->name('penjualan.daftarpenjualan');
+
+    Route::get('/penjualan/detail/{id}', function ($id) {
+        $penjualan = Penjualan::with('details.produk')->findOrFail($id);
+        return response()->json($penjualan);
+    })->name('penjualan.detail');
+
+    Route::get('/penjualan/export-excel', function () {
+        $dari = Carbon::now()->format('d M Y');
+        $sampai = Carbon::now()->format('d M Y');
+        $exportTime = Carbon::now()->format('d M Y \p\u\k\u\l H.i');
+
+        $header = collect([
+            ['PENJUALAN', '', '', ''],
+            ['--------------------------------', '', '', ''],
+            ['Nama Outlet', ': Apotek Assalam', '', ''],
+            ['ID Outlet', ': aptassalambekasi', '', ''],
+            ['Dari Tanggal', ': ' . $dari, '', ''],
+            ['Sampai Tanggal', ': ' . $sampai, '', ''],
+            ['Di-export Pada Tanggal', ': ' . $exportTime, '', ''],
+            ['--------------------------------', '', '', ''],
+            ['', '', '', ''],
+            ['Tanggal', 'No Struk', 'Produk', 'Total Penjualan'],
+        ]);
+
+        $data = Penjualan::with('details.produk')
+            ->where('status', '!=', 'draft')
+            ->latest('tanggal')
+            ->get()
+            ->map(function ($item) {
+                $produk = $item->details->map(function ($d) {
+                    return $d->qty . ' x ' . ($d->produk->nama_produk ?? '-');
+                })->implode(', ');
+
+                return [
+                    Carbon::parse($item->tanggal)->format('d/m/Y'),
+                    $item->no_struk,
+                    $produk,
+                    'Rp ' . number_format($item->total_penjualan, 2, ',', '.')
+                ];
+            });
+
+        $export = $header->merge($data);
+
+        return (new FastExcel($export))->download('daftar_penjualan.xlsx');
+    })->name('penjualan.export.excel');
+
+    Route::get('/penjualan/tertunda', function (Request $request) {
+        $search = $request->get('search');
+
+        $penjualans = Penjualan::with('details.produk')
+            ->where('status', 'draft')
+            ->when($search, function ($query) use ($search) {
+                $query->where('no_struk', 'like', '%' . $search . '%');
+            })
+            ->latest('tanggal')
+            ->get();
+
+        return view('Penjualan.penjualantertunda', compact('penjualans'));
+    })->name('penjualan.tertunda');
+
+    Route::get('/penjualan/kasir/{id}/lanjutkan', function ($id) {
+        $penjualan = Penjualan::with('details.produk')
+            ->where('status', 'draft')
+            ->findOrFail($id);
+
+        return view('Penjualan.kasir', compact('penjualan'));
+    })->name('penjualan.kasir.lanjutkan');
+
+    Route::delete('/penjualan/tertunda/{id}', function ($id) {
+        $penjualan = Penjualan::where('status', 'draft')->findOrFail($id);
+        $penjualan->delete();
+
+        return redirect()->route('penjualan.tertunda')
+            ->with('success', 'Draft berhasil dihapus');
+    })->name('penjualan.tertunda.destroy');
 
     Route::get('/persediaan/gudang-penyimpanan', function (Request $request) {
         $gudangs = Gudang::orderBy('nama_gudang')->get();
@@ -396,33 +604,72 @@ Route::middleware(['auth'])->group(function () {
         ])->with('success', 'Produk berhasil dihapus dari gudang.');
     })->name('persediaan.gudangpenyimpanan.destroy');
 
-    Route::get('/penjualan/kasir/search-produk', function (Illuminate\Http\Request $request) {
-        $q = trim($request->get('q', ''));
+    Route::get('/penjualan/qris', function () {
+        return view('Penjualan.qris');
+    })->name('penjualan.qris');
 
-        if ($q === '') {
-            return response()->json([]);
-        }
+    Route::get('/pusat-bantuan/usulkan-fitur-baru', function () {
+        return view('PusatBantuan.fiturbaru');
+    })->name('pusatbantuan.fiturbaru');
 
-        $produks = \App\Models\Produk::query()
-            ->where(function ($query) use ($q) {
-                $query->where('nama_produk', 'like', "%{$q}%")
-                    ->orWhere('sku', 'like', "%{$q}%")
-                    ->orWhere('barcode', 'like', "%{$q}%");
-            })
-            ->orderBy('nama_produk')
-            ->limit(10)
-            ->get([
-                'id',
-                'nama_produk',
-                'sku',
-                'barcode',
-                'harga_jual',
-                'satuan_utama',
-                'stok',
-            ]);
+    Route::get('/pusat-bantuan/riwayat-update', function () {
+        return view('PusatBantuan.riwayatupdate');
+    })->name('pusatbantuan.riwayatupdate');
 
-        return response()->json($produks);
-    })->name('penjualan.kasir.search');
+    Route::get('/pusat-bantuan/minta-bantuan', function () {
+        return view('PusatBantuan.mintabantuan');
+    })->name('pusatbantuan.mintabantuan');
 
+    Route::post('/pusat-bantuan/usulkan-fitur-baru', function (\Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'nama_fitur' => 'required|string|max:255',
+            'kategori' => 'required|string|max:100',
+            'deskripsi' => 'required|string',
+            'manfaat' => 'required|string',
+        ]);
+
+        Mail::to('refree06@gmail.com')->send(new UsulanFiturMail($validated));
+
+        return redirect()->route('pusatbantuan.fiturbaru')
+            ->with('success', 'Usulan fitur berhasil dikirim ke email.');
+    })->name('pusatbantuan.fiturbaru.store');
+
+    Route::post('/pusat-bantuan/minta-bantuan', function (Request $request) {
+        $validated = $request->validate([
+            'subjek' => 'required|string|max:255',
+            'kategori' => 'required|string|max:100',
+            'detail' => 'required|string',
+        ]);
+
+        Mail::to('refree06@gmail.com')->send(new MintaBantuanMail($validated));
+
+        $pesanWa = "Halo Admin Apotek Saya,\n\n"
+            . "Saya ingin melaporkan kendala:\n\n"
+            . "Subjek: " . $validated['subjek'] . "\n"
+            . "Kategori: " . $validated['kategori'] . "\n"
+            . "Detail: " . $validated['detail'];
+
+        $waLink = 'https://wa.me/6281398357731?text=' . urlencode($pesanWa);
+
+        return redirect()
+            ->route('pusatbantuan.mintabantuan')
+            ->with('success', 'Laporan berhasil dikirim ke email.')
+            ->with('wa_link', $waLink);
+    })->name('pusatbantuan.mintabantuan.store');
+
+    Route::get('/settings', function () {
+        return view('Settings.index');
+    })->name('settings.index');
+
+    Route::post('/settings/notifications', function (\Illuminate\Http\Request $request) {
+        $enabled = $request->has('notifications_enabled');
+
+        return redirect()->route('settings.index')
+            ->with('success', $enabled ? 'Notifikasi berhasil diaktifkan.' : 'Notifikasi berhasil dimatikan.');
+    })->name('settings.notifications.update');
+
+    Route::get('/help-center', function () {
+        return view('HelpCenter.index');
+    })->name('helpcenter.index');
 
 });
