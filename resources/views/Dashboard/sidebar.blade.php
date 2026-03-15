@@ -132,12 +132,7 @@
                         Daftar Produk
                     </a>
 
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Stok Kadaluarsa
-                    </a>
-
-                    <a href="#"
+                    <a href="{{ route('persediaan.stokopname') }}" 
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Stok Opname
                     </a>
@@ -147,47 +142,9 @@
                         Stok Produk
                     </a>
 
-                    <a href="#"
+                    <a href="{{ route('persediaan.gudangpenyimpanan') }}"
                     class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
                         Gudang Penyimpanan
-                    </a>
-                </div>
-            </div>
-
-            <!-- Laporan Dropdown -->
-            <div class="px-3">
-                <button
-                    type="button"
-                    id="laporanToggle"
-                    class="w-full flex items-center px-3 py-3 rounded-2xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200"
-                >
-                    <i class="fas fa-book-open w-5 mr-3 shrink-0 text-teal-600"></i>
-                    <span class="flex-1 text-left font-medium whitespace-nowrap">Laporan</span>
-                    <i id="laporanArrow" class="fas fa-chevron-down text-xs text-gray-500 dark:text-gray-400 transition-transform duration-200"></i>
-                </button>
-
-                <div
-                    id="laporanDropdown"
-                    class="hidden mt-2 bg-gray-50 dark:bg-gray-900 rounded-2xl p-3 space-y-1 transition-colors duration-200"
-                >
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Laporan Penjualan
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Laporan Pembelian
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Laporan Persediaan
-                    </a>
-
-                    <a href="#"
-                    class="block px-4 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200">
-                        Laporan Keuangan
                     </a>
                 </div>
             </div>

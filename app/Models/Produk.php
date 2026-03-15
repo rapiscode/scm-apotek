@@ -30,4 +30,17 @@ class Produk extends Model
     {
         return $this->hasMany(PenyesuaianStok::class, 'produk_id');
     }
+
+    public function stokOpname()
+    {
+        return $this->hasOne(\App\Models\StokOpname::class, 'produk_id');
+    }
+
+    public function gudangs()
+    {
+        return $this->belongsToMany(\App\Models\Gudang::class, 'gudang_produks')
+            ->withPivot('stok')
+            ->withTimestamps();
+    }
+
 }
