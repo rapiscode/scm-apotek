@@ -6,10 +6,10 @@
 
 @section('content')
 <div class="h-[calc(100vh-9rem)]">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 h-full flex flex-col">
+    <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-4 h-full flex flex-col">
 
         <div class="flex items-center justify-between gap-4 flex-wrap mb-3">
-            <h2 class="text-3xl font-bold text-blue-700">Penjualan Tertunda</h2>
+            <h2 class="text-3xl font-bold text-blue-700 dark:text-blue-700">Penjualan Tertunda</h2>
         </div>
 
         <div class="flex items-center justify-between gap-3 flex-wrap mb-2">
@@ -20,7 +20,7 @@
                         name="search"
                         value="{{ request('search') }}"
                         placeholder="Cari data"
-                        class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
                     >
                     <button
                         type="submit"
@@ -33,10 +33,10 @@
             </form>
         </div>
 
-        <div class="rounded-xl border border-gray-100 overflow-hidden flex-1 flex flex-col">
+        <div class="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-1 flex flex-col">
             <div class="overflow-x-auto overflow-y-auto flex-1">
                 <table class="min-w-[1200px] w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+                    <thead class="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 sticky top-0 z-10">
                         <tr>
                             <th class="text-left px-4 py-3 font-semibold w-16">No.</th>
                             <th class="text-center px-4 py-3 font-semibold min-w-[160px]">Tanggal</th>
@@ -47,9 +47,9 @@
                         </tr>
                     </thead>
 
-                    <tbody class="bg-white">
+                    <tbody class="bg-white dark:bg-gray-900">
                         @forelse($penjualans as $index => $item)
-                            <tr class="border-t border-gray-100">
+                            <tr class="border-t border-gray-100 dark:border-gray-800">
                                 <td class="px-4 py-4 align-top">{{ $index + 1 }}</td>
 
                                 <td class="px-4 py-4 align-top text-center text-gray-700">
@@ -104,7 +104,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr class="border-t border-gray-100">
+                            <tr class="border-t border-gray-100 dark:border-gray-800">
                                 <td colspan="6" class="text-center py-24 text-gray-500">
                                     Data penjualan tertunda belum ada
                                 </td>

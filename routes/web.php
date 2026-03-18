@@ -31,6 +31,11 @@ use App\Mail\MintaBantuanMail;
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.process');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/register', function () {
+    return view('auth.register');
+})->name('register');
+
+Route::post('/register', [AuthController::class, 'register'])->name('register.process');
 
 Route::redirect('/', '/dashboard');
 
@@ -85,15 +90,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/persediaan/daftar-produk', [DaftarProdukController::class, 'store'])
         ->name('persediaan.daftarproduk.store');
-
-    Route::delete('/persediaan/stok-produk/{id}', function ($id) {
-
-        PenyesuaianStok::findOrFail($id)->delete();
-
-        return redirect()->route('persediaan.stokproduk')
-            ->with('success','Data berhasil dihapus');
-
-    })->name('persediaan.stokproduk.destroy');
 
     Route::get('/persediaan/stok-produk', function (Request $request) {
         $produks = Produk::orderBy('nama_produk')->get();
@@ -671,5 +667,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/help-center', function () {
         return view('HelpCenter.index');
     })->name('helpcenter.index');
+
+
 
 });

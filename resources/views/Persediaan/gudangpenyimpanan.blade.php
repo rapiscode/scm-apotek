@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="h-[calc(100vh-9rem)]">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 h-full flex flex-col">
+    <div class="bg-white dark:bg-gray-950 rounded-xl shadow-sm border dark:border-gray-800 border-gray-100 p-4 h-full flex flex-col">
 
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-3xl font-bold text-blue-700">Gudang Penyimpanan</h2>
@@ -38,16 +38,16 @@
         <div class="grid grid-cols-12 gap-4 flex-1 min-h-0">
 
             <!-- Sidebar Gudang -->
-            <div class="col-span-12 lg:col-span-3 border border-gray-100 rounded-xl overflow-hidden flex flex-col">
-                <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 font-semibold text-gray-700">
+            <div class="col-span-12 lg:col-span-3 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden flex flex-col">
+                <div class="px-4 py-3 dark:bg-gray-900 bg-gray-50 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-700 dark:text-gray-300">
                     Daftar Gudang
                 </div>
 
-                <div class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                <div class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($gudangs as $gudang)
                         <a
                             href="{{ route('persediaan.gudangpenyimpanan', ['gudang_id' => $gudang->id]) }}"
-                            class="block px-4 py-3 hover:bg-blue-50 transition {{ (string)$selectedGudangId === (string)$gudang->id ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700' }}"
+                            class="block px-4 py-3 hover:bg-blue-50 transition {{ (string)$selectedGudangId === (string)$gudang->id ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 dark:text-gray-300' }}"
                         >
                             {{ $gudang->nama_gudang }}
                         </a>
@@ -60,9 +60,9 @@
             </div>
 
             <!-- Isi Gudang -->
-            <div class="col-span-12 lg:col-span-9 border border-gray-100 rounded-xl overflow-hidden flex flex-col">
-                <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                    <div class="font-semibold text-gray-700">
+            <div class="col-span-12 lg:col-span-9 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden flex flex-col">
+                <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                    <div class="font-semibold text-gray-700 dark:text-gray-300">
                         {{ $selectedGudang ? 'Isi ' . $selectedGudang->nama_gudang : 'Pilih gudang terlebih dahulu' }}
                     </div>
                 </div>
@@ -70,8 +70,8 @@
                 <div class="flex-1 overflow-auto">
                     @if($selectedGudang)
                         <table class="w-full text-sm">
-                            <thead class="bg-white text-gray-700 sticky top-0">
-                                <tr class="border-b border-gray-100">
+                            <thead class="bg-white dark:bg-gray-800 dark:text-gray-300 text-gray-700 sticky top-0">
+                                <tr class="border-b dark:border-gray-800 border-gray-100">
                                     <th class="text-left px-4 py-3 font-semibold w-16">No.</th>
                                     <th class="text-left px-4 py-3 font-semibold">Nama Produk</th>
                                     <th class="text-left px-4 py-3 font-semibold">SKU</th>

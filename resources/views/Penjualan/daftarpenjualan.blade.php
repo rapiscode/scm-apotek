@@ -17,15 +17,15 @@
         <div class="flex items-center justify-between gap-3 flex-wrap mb-2">
             <div class="flex items-center gap-2 flex-wrap">
                 <div class="relative min-w-[180px] pt-3">
-                    <span class="absolute top-0 left-3 -translate-y-1/2 bg-white px-1 text-[11px] text-gray-400 z-10">
+                    <span class="absolute top-0 left-3 -translate-y-1/2 bg-white dark:bg-gray-950 px-1 text-[11px] text-gray-400 dark:text-gray-500 z-10">
                         Pilihan Data
                     </span>
 
-                    <select class="appearance-none w-full h-11 pl-4 pr-10 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm">
+                    <select class="appearance-none w-full h-11 pl-4 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30">
                         <option>Struk Penjualan</option>
                     </select>
 
-                    <div class="pointer-events-none absolute right-3 top-[calc(50%+6px)] -translate-y-1/2 text-gray-500">
+                    <div class="pointer-events-none absolute right-3 top-[calc(50%+6px)] -translate-y-1/2 text-gray-500 dark:text-gray-400">
                         <i class="fas fa-chevron-down text-xs"></i>
                     </div>
                 </div>
@@ -37,11 +37,11 @@
                             name="search"
                             value="{{ request('search') }}"
                             placeholder="Cari data"
-                            class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30"
                         >
                         <button
                             type="submit"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-gray-500"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-gray-500 dark:text-gray-400"
                         >
                             <i class="fas fa-bars-staggered text-sm"></i>
                             <i class="fas fa-search text-sm"></i>
@@ -57,7 +57,7 @@
                     <input type="hidden" name="status_transaksi" value="{{ request('status_transaksi', 'semua') }}">
 
                     <div class="flex flex-col">
-                        <span class="text-[11px] text-gray-400 ml-2 mb-1">Filter Tgl</span>
+                        <span class="text-[11px] text-gray-400 dark:text-gray-500 ml-2 mb-1">Filter Tgl</span>
 
                         <div class="flex items-center gap-2">
                             <input
@@ -65,17 +65,17 @@
                                 name="tanggal_awal"
                                 value="{{ request('tanggal_awal') }}"
                                 onchange="document.getElementById('filterTanggalForm').submit()"
-                                class="h-11 rounded-lg border border-gray-200 bg-white text-gray-700 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                class="h-11 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30"
                             >
 
-                            <span class="text-gray-400 text-sm">s/d</span>
+                            <span class="text-gray-400 dark:text-gray-500 text-sm">s/d</span>
 
                             <input
                                 type="date"
                                 name="tanggal_akhir"
                                 value="{{ request('tanggal_akhir') }}"
                                 onchange="document.getElementById('filterTanggalForm').submit()"
-                                class="h-11 rounded-lg border border-gray-200 bg-white text-gray-700 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                class="h-11 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30"
                             >
                         </div>
                     </div>
@@ -85,7 +85,7 @@
                 <button
                     type="button"
                     id="openFilterPenjualanModalBtn"
-                    class="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700"
+                    class="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                     <i class="fas fa-filter text-sm"></i>
                     <span>Filter</span>
@@ -98,14 +98,14 @@
 
                 <button
                     type="button"
-                    class="mt-5 w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-600"
+                    class="mt-5 w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                     <i class="fas fa-shuffle text-sm"></i>
                 </button>
 
                 <a
                     href="{{ route('penjualan.export.excel') }}"
-                    class="mt-5 w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-600 flex items-center justify-center"
+                    class="mt-5 w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center"
                 >
                     <i class="fas fa-download text-sm"></i>
                 </a>
@@ -113,10 +113,10 @@
         </div>
 
         <!-- Table -->
-        <div class="rounded-xl border border-gray-100 overflow-hidden flex-1 flex flex-col">
+        <div class="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex-1 flex flex-col">
             <div class="overflow-x-auto overflow-y-auto flex-1">
                 <table class="min-w-[1400px] w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-700 sticky top-0 z-10">
+                    <thead class="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 sticky top-0 z-10">
                         <tr>
                             <th class="text-left px-4 py-3 font-semibold w-16">No.</th>
                             <th class="text-center px-4 py-3 font-semibold min-w-[140px]">Tanggal</th>
@@ -127,22 +127,21 @@
                         </tr>
                     </thead>
 
-                    <tbody class="bg-white">
+                    <tbody class="bg-white dark:bg-gray-950">
                         @forelse($penjualans as $index => $item)
-                            <tr class="border-t border-gray-100">
-                                <td class="px-4 py-4 align-top">{{ $index + 1 }}</td>
+                            <tr class="border-t border-gray-100 dark:border-gray-800">
+                                <td class="px-4 py-4 align-top text-gray-700 dark:text-gray-200">{{ $index + 1 }}</td>
 
-                                <td class="px-4 py-4 align-top text-center text-gray-700">
+                                <td class="px-4 py-4 align-top text-center text-gray-700 dark:text-gray-300">
                                     {{ \Carbon\Carbon::parse($item->tanggal)->translatedFormat('d M Y') }}<br>
                                     {{ \Carbon\Carbon::parse($item->tanggal)->format('H:i') }}
                                 </td>
 
-                                <td class="px-4 py-4 align-top text-center text-gray-800">
+                                <td class="px-4 py-4 align-top text-center text-gray-800 dark:text-gray-100">
                                     {{ $item->no_struk }}
                                 </td>
 
-                                {{-- PRODUK --}}
-                                <td class="px-4 py-4 align-top text-gray-700">
+                                <td class="px-4 py-4 align-top text-gray-700 dark:text-gray-300">
                                     @forelse($item->details as $detail)
                                         <div>
                                             {{ $detail->qty }} {{ $detail->satuan }} x {{ $detail->produk->nama_produk ?? '-' }}
@@ -152,15 +151,14 @@
                                     @endforelse
                                 </td>
 
-                                {{-- TOTAL PENJUALAN --}}
-                                <td class="px-4 py-4 align-top text-center text-gray-800 font-medium">
+                                <td class="px-4 py-4 align-top text-center text-gray-800 dark:text-gray-100 font-medium">
                                     Rp {{ number_format($item->total_penjualan, 2, ',', '.') }}
                                 </td>
 
                                 <td class="px-4 py-4 align-top text-center">
                                     <button
                                         type="button"
-                                        class="detail-btn inline-flex items-center px-4 py-2 rounded-lg border border-blue-400 text-blue-600 text-xs font-semibold hover:bg-blue-50"
+                                        class="detail-btn inline-flex items-center px-4 py-2 rounded-lg border border-blue-400 dark:border-blue-500 text-blue-600 dark:text-blue-400 text-xs font-semibold hover:bg-blue-50 dark:hover:bg-blue-500/10"
                                         data-id="{{ $item->id }}"
                                     >
                                         Detail
@@ -168,8 +166,8 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr class="border-t border-gray-100">
-                                <td colspan="6" class="text-center py-24 text-gray-500">
+                            <tr class="border-t border-gray-100 dark:border-gray-800">
+                                <td colspan="6" class="text-center py-24 text-gray-500 dark:text-gray-400">
                                     Data penjualan belum ada
                                 </td>
                             </tr>
@@ -186,7 +184,7 @@
     <div id="detailOverlay" class="absolute inset-0 bg-black/50"></div>
 
     <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-[1200px] rounded-xl shadow-xl overflow-hidden">
+        <div class="bg-white dark:bg-gray-950 w-full max-w-[1200px] rounded-xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800">
 
             <!-- Header -->
             <div class="bg-blue-600 px-5 py-4 flex items-center justify-between text-white">
@@ -198,33 +196,32 @@
             </div>
 
             <!-- Content -->
-            <div class="p-6 grid grid-cols-12 gap-6">
+            <div class="p-6 grid grid-cols-12 gap-6 text-gray-900 dark:text-gray-100">
 
                 <!-- Kiri -->
                 <div class="col-span-12 xl:col-span-8">
 
                     <div class="grid grid-cols-4 gap-4 mb-6">
                         <div>
-                            <div class="text-sm text-gray-500">Waktu Penjualan</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Waktu Penjualan</div>
                             <div id="detailTanggal" class="font-semibold"></div>
                         </div>
 
                         <div>
-                            <div class="text-sm text-gray-500">Petugas</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Petugas</div>
                             <div>Admin</div>
                         </div>
 
                         <div>
-                            <div class="text-sm text-gray-500">Total Penjualan</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Penjualan</div>
                             <div id="detailTotal" class="font-semibold"></div>
                         </div>
                     </div>
 
-                    <!-- Barang Terjual -->
-                    <h3 class="text-lg font-bold text-blue-700 mb-2">Barang Terjual</h3>
+                    <h3 class="text-lg font-bold text-blue-700 dark:text-blue-400 mb-2">Barang Terjual</h3>
 
-                    <table class="w-full text-sm border">
-                        <thead class="bg-gray-100">
+                    <table class="w-full text-sm border border-gray-200 dark:border-gray-800">
+                        <thead class="bg-gray-100 dark:bg-gray-900">
                             <tr>
                                 <th class="px-3 py-2">No</th>
                                 <th class="px-3 py-2 text-left">Nama Produk</th>
@@ -234,21 +231,21 @@
                             </tr>
                         </thead>
 
-                        <tbody id="detailItems"></tbody>
+                        <tbody id="detailItems" class="bg-white dark:bg-gray-950"></tbody>
                     </table>
 
                 </div>
 
-                <!-- Kanan (Preview Struk) -->
-                <div class="col-span-12 xl:col-span-4 border-l pl-6">
+                <!-- Kanan -->
+                <div class="col-span-12 xl:col-span-4 border-l border-gray-200 dark:border-gray-800 pl-6">
 
                     <div class="text-center mb-6">
-                        <h2 class="text-xl font-bold">Apotek Saya</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Apotek Saya</h2>
                     </div>
 
-                    <div id="detailStrukItems" class="space-y-2 text-sm"></div>
+                    <div id="detailStrukItems" class="space-y-2 text-sm text-gray-700 dark:text-gray-300"></div>
 
-                    <div class="border-t mt-4 pt-3 font-bold flex justify-between">
+                    <div class="border-t border-gray-200 dark:border-gray-800 mt-4 pt-3 font-bold flex justify-between text-gray-900 dark:text-white">
                         <span>Total</span>
                         <span id="detailStrukTotal"></span>
                     </div>
@@ -269,7 +266,7 @@
         <form
             method="GET"
             action="{{ route('penjualan.daftarpenjualan') }}"
-            class="bg-white rounded-2xl shadow-2xl w-[440px] max-w-full overflow-hidden"
+            class="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl w-[440px] max-w-full overflow-hidden border border-gray-200 dark:border-gray-800"
         >
             <input type="hidden" name="search" value="{{ request('search') }}">
             <input type="hidden" name="tanggal_awal" value="{{ request('tanggal_awal') }}">
@@ -284,11 +281,11 @@
 
             <div class="p-6 space-y-4">
                 <div class="grid grid-cols-[170px_20px_1fr] items-center gap-3">
-                    <label class="text-gray-700">Status Transaksi</label>
-                    <span class="text-gray-400">:</span>
+                    <label class="text-gray-700 dark:text-gray-300">Status Transaksi</label>
+                    <span class="text-gray-400 dark:text-gray-500">:</span>
                     <select
                         name="status_transaksi"
-                        class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30"
                     >
                         <option value="semua" {{ request('status_transaksi', 'semua') === 'semua' ? 'selected' : '' }}>
                             Semua
@@ -306,10 +303,10 @@
                 </div>
             </div>
 
-            <div class="border-t px-6 py-4 flex items-center justify-between">
+            <div class="border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
                 <a
                     href="{{ route('penjualan.daftarpenjualan') }}"
-                    class="text-sky-500 font-semibold"
+                    class="text-sky-500 dark:text-sky-400 font-semibold"
                 >
                     Reset Filter
                 </a>
@@ -395,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         if (detailItems) {
                             detailItems.innerHTML += `
-                                <tr class="border-t">
+                                <tr class="border-t border-gray-200 dark:border-gray-800">
                                     <td class="px-3 py-2">${index + 1}</td>
                                     <td class="px-3 py-2">${namaProduk}</td>
                                     <td class="px-3 py-2 text-center">Rp ${formatRupiah(item.harga_jual)}</td>
@@ -420,8 +417,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     if (detailItems) {
                         detailItems.innerHTML = `
-                            <tr class="border-t">
-                                <td colspan="5" class="px-3 py-6 text-center text-gray-500">
+                            <tr class="border-t border-gray-200 dark:border-gray-800">
+                                <td colspan="5" class="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
                                     Tidak ada detail penjualan
                                 </td>
                             </tr>
@@ -430,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     if (detailStrukItems) {
                         detailStrukItems.innerHTML = `
-                            <div class="text-sm text-gray-500 text-center">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 text-center">
                                 Tidak ada detail penjualan
                             </div>
                         `;
