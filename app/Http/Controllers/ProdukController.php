@@ -2,344 +2,115 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produk;
+use App\Services\FirestoreService;
 use Illuminate\Http\Request;
-use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Satuan;
-use App\Models\Rak;
-
+use Illuminate\Validation\ValidationException;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class ProdukController extends Controller
 {
+    public function __construct(protected FirestoreService $firestore) {}
+
+    protected function payload(array $v): array
+    {
+        return [
+            'tipe_produk'=>$v['tipe_produk'], 'nama_produk'=>$v['nama_produk'], 'nama_pabrik'=>$v['nama_pabrik']??null,
+            'sku'=>$v['sku'], 'barcode'=>$v['barcode']??null, 'pajak'=>$v['pajak']??null, 'satuan_utama'=>$v['satuan_utama'],
+            'harga_beli'=>(float)($v['harga_beli']??0), 'harga_jual'=>(float)($v['harga_jual']??0), 'stok'=>(int)($v['stok']??0),
+            'stok_minimal'=>(int)($v['stok_minimal']??0), 'stok_maksimal'=>(int)($v['stok_maksimal']??0),
+            'rak_penyimpanan'=>$v['rak_penyimpanan']??null, 'status_penjualan'=>$v['status_penjualan'], 'catatan'=>$v['catatan']??null,
+        ];
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'tipe_produk'=>'required|string|max:50','nama_produk'=>'required|string|max:255','nama_pabrik'=>'nullable|string|max:255',
+            'sku'=>'required|string|max:255','barcode'=>'nullable|string|max:255','pajak'=>'nullable|string|max:50','satuan_utama'=>'required|string|max:100',
+            'harga_beli'=>'nullable|numeric|min:0','harga_jual'=>'nullable|numeric|min:0','stok'=>'nullable|integer|min:0',
+            'stok_minimal'=>'nullable|integer|min:0','stok_maksimal'=>'nullable|integer|min:0','rak_penyimpanan'=>'nullable|string|max:255',
+            'status_penjualan'=>'required|string|in:dijual,tidak_dijual','catatan'=>'nullable|string',
+        ];
+    }
+
     public function index()
     {
-        $produks = Produk::latest()->get();
-
-        $produkStats = Produk::selectRaw("
-            COUNT(CASE WHEN status_penjualan = 'dijual' THEN 1 END) as dijual,
-            COUNT(CASE WHEN status_penjualan = 'tidak_dijual' THEN 1 END) as tidak_dijual
-        ")->first();
-
-        $satuans = Satuan::where('status', 'aktif')
-            ->orderBy('nama_satuan')
-            ->get();
-
-        $raks = Rak::where('status', 'aktif')
-            ->orderBy('nama_rak')
-            ->get();
-
-        return view('masterdata.produk.masterproduk', compact(
-            'produks',
-            'produkStats',
-            'satuans',
-            'raks'
-        ));
+        $produks = $this->firestore->all('produks');
+        $produkStats = (object)['dijual'=>$produks->where('status_penjualan','dijual')->count(), 'tidak_dijual'=>$produks->where('status_penjualan','tidak_dijual')->count()];
+        $satuans = $this->firestore->all('satuans')->where('status','aktif')->sortBy('nama_satuan')->values();
+        $raks = $this->firestore->all('raks')->where('status','aktif')->sortBy('nama_rak')->values();
+        return view('masterdata.produk.masterproduk', compact('produks','produkStats','satuans','raks'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'tipe_produk' => 'required|string|max:50',
-            'nama_produk' => 'required|string|max:255',
-            'nama_pabrik' => 'nullable|string|max:255',
-            'sku' => 'required|string|max:255|unique:produks,sku',
-            'barcode' => 'nullable|string|max:255',
-            'pajak' => 'nullable|string|max:50',
-            'satuan_utama' => 'required|string|max:100',
-            'harga_beli' => 'nullable|numeric|min:0',
-            'harga_jual' => 'nullable|numeric|min:0',
-            'stok_minimal' => 'nullable|integer|min:0',
-            'stok_maksimal' => 'nullable|integer|min:0',
-            'rak_penyimpanan' => 'nullable|string|max:255',
-            'status_penjualan' => 'required|string|in:dijual,tidak_dijual',
-            'catatan' => 'nullable|string',
-        ]);
-
-        Produk::create([
-            'tipe_produk' => $validated['tipe_produk'],
-            'nama_produk' => $validated['nama_produk'],
-            'nama_pabrik' => $validated['nama_pabrik'] ?? null,
-            'sku' => $validated['sku'],
-            'barcode' => $validated['barcode'] ?? null,
-            'pajak' => $validated['pajak'] ?? null,
-            'satuan_utama' => $validated['satuan_utama'],
-            'harga_beli' => $validated['harga_beli'] ?? 0,
-            'harga_jual' => $validated['harga_jual'] ?? 0,
-            'stok_minimal' => $validated['stok_minimal'] ?? 0,
-            'stok_maksimal' => $validated['stok_maksimal'] ?? 0,
-            'rak_penyimpanan' => $validated['rak_penyimpanan'] ?? null,
-            'status_penjualan' => $validated['status_penjualan'],
-            'catatan' => $validated['catatan'] ?? null,
-        ]);
-
-        return redirect()
-            ->route('masterdata.masterproduk')
-            ->with('success', 'Produk berhasil ditambahkan.');
+        $v=$request->validate($this->rules());
+        if(!$this->firestore->unique('produks','sku',$v['sku'])) throw ValidationException::withMessages(['sku'=>'SKU sudah dipakai.']);
+        $this->firestore->create('produks',$this->payload($v));
+        return redirect()->route('masterdata.masterproduk')->with('success','Produk berhasil ditambahkan.');
     }
 
-    public function update(Request $request, Produk $produk)
+    public function update(Request $request, string $produk)
     {
-        $validated = $request->validate([
-            'tipe_produk' => 'required|string|max:50',
-            'nama_produk' => 'required|string|max:255',
-            'nama_pabrik' => 'nullable|string|max:255',
-            'sku' => 'required|string|max:255|unique:produks,sku,' . $produk->id,
-            'barcode' => 'nullable|string|max:255',
-            'pajak' => 'nullable|string|max:50',
-            'satuan_utama' => 'required|string|max:100',
-            'harga_beli' => 'nullable|numeric|min:0',
-            'harga_jual' => 'nullable|numeric|min:0',
-            'stok_minimal' => 'nullable|integer|min:0',
-            'stok_maksimal' => 'nullable|integer|min:0',
-            'rak_penyimpanan' => 'nullable|string|max:255',
-            'status_penjualan' => 'required|string|in:dijual,tidak_dijual',
-            'catatan' => 'nullable|string',
-        ]);
-
-        $produk->update([
-            'tipe_produk' => $validated['tipe_produk'],
-            'nama_produk' => $validated['nama_produk'],
-            'nama_pabrik' => $validated['nama_pabrik'] ?? null,
-            'sku' => $validated['sku'],
-            'barcode' => $validated['barcode'] ?? null,
-            'pajak' => $validated['pajak'] ?? null,
-            'satuan_utama' => $validated['satuan_utama'],
-            'harga_beli' => $validated['harga_beli'] ?? 0,
-            'harga_jual' => $validated['harga_jual'] ?? 0,
-            'stok_minimal' => $validated['stok_minimal'] ?? 0,
-            'stok_maksimal' => $validated['stok_maksimal'] ?? 0,
-            'rak_penyimpanan' => $validated['rak_penyimpanan'] ?? null,
-            'status_penjualan' => $validated['status_penjualan'],
-            'catatan' => $validated['catatan'] ?? null,
-        ]);
-
-        return redirect()
-            ->route('masterdata.masterproduk')
-            ->with('success', 'Produk berhasil diperbarui.');
+        $v=$request->validate($this->rules());
+        if(!$this->firestore->unique('produks','sku',$v['sku'],$produk)) throw ValidationException::withMessages(['sku'=>'SKU sudah dipakai.']);
+        $this->firestore->update('produks',$produk,$this->payload($v));
+        return redirect()->route('masterdata.masterproduk')->with('success','Produk berhasil diperbarui.');
     }
 
-    public function destroy(Produk $produk)
-    {
-        $produk->delete();
+    public function destroy(string $produk)
+    { $this->firestore->delete('produks',$produk); return redirect()->route('masterdata.masterproduk')->with('success','Produk berhasil dihapus.'); }
 
-        return redirect()
-            ->route('masterdata.masterproduk')
-            ->with('success', 'Produk berhasil dihapus.');
-    }
-
-    public function downloadTemplate()
-    {
-        $path = storage_path('app/public/templates/template_import_produk.xlsx');
-
-        if (!file_exists($path)) {
-            abort(404, 'File template tidak ditemukan.');
-        }
-
-        return response()->download($path, 'template_import_produk.xlsx');
-    }
+    public function downloadTemplate(){ $path=storage_path('app/public/templates/template_import_produk.xlsx'); if(!file_exists($path)) abort(404,'File template tidak ditemukan.'); return response()->download($path,'template_import_produk.xlsx'); }
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file_import' => 'required|file|mimes:xlsx,xls|max:5120',
-        ]);
-
-        $file = $request->file('file_import');
-        $filename = time() . '_' . $file->getClientOriginalName();
-
-        $path = $file->storeAs('temp', $filename, 'local');
-        $fullPath = Storage::disk('local')->path($path);
-
-        if (!file_exists($fullPath)) {
-            return redirect()
-                ->route('masterdata.masterproduk')
-                ->with('success', 'File upload gagal ditemukan.');
-        }
-
-        $rowNumber = 0;
-
-        (new FastExcel)->startRow(1)->sheet(2)->import($fullPath, function ($row) use (&$rowNumber) {
-            $rowNumber++;
-
-            // skip baris contoh
-            if ($rowNumber === 1) {
-                return null;
-            }
-
-            if (empty($row['sku *'] ?? null) || empty($row['nama_produk *'] ?? null)) {
-                return null;
-            }
-
-            if (Produk::where('sku', $row['sku *'])->exists()) {
-                return null;
-            }
-
-            return Produk::create([
-                'tipe_produk'      => $row['tipe_produk *'] ?? 'umum',
-                'nama_produk'      => $row['nama_produk *'] ?? null,
-                'nama_pabrik'      => $row['nama_pabrik'] ?? null,
-                'sku'              => $row['sku *'] ?? null,
-                'barcode'          => $row['barcode'] ?? null,
-                'pajak'            => $row['pajak'] ?? null,
-                'satuan_utama'     => $row['satuan_utama *'] ?? null,
-                'harga_beli'       => $row['harga_beli'] ?? 0,
-                'harga_jual'       => $row['harga_jual'] ?? 0,
-                'stok_minimal'     => $row['stok_minimal'] ?? 0,
-                'stok_maksimal'    => $row['stok_maksimal'] ?? 0,
-                'rak_penyimpanan'  => $row['rak_penyimpanan'] ?? null,
-                'status_penjualan' => $row['status_penjualan *'] ?? 'dijual',
-                'catatan'          => $row['catatan'] ?? null,
-            ]);
+        $request->validate(['file_import'=>'required|file|mimes:xlsx,xls|max:5120']);
+        $path=$request->file('file_import')->storeAs('temp',time().'_'.$request->file('file_import')->getClientOriginalName(),'local');
+        $fullPath=Storage::disk('local')->path($path); $rowNumber=0;
+        (new FastExcel)->startRow(1)->sheet(2)->import($fullPath,function($row) use (&$rowNumber){
+            $rowNumber++; if($rowNumber===1 || empty($row['sku *']??null) || empty($row['nama_produk *']??null)) return null;
+            if(!$this->firestore->unique('produks','sku',$row['sku *'])) return null;
+            return $this->firestore->create('produks',$this->payload([
+                'tipe_produk'=>$row['tipe_produk *']??'umum','nama_produk'=>$row['nama_produk *']??null,'nama_pabrik'=>$row['nama_pabrik']??null,
+                'sku'=>$row['sku *']??null,'barcode'=>$row['barcode']??null,'pajak'=>$row['pajak']??null,'satuan_utama'=>$row['satuan_utama *']??'-',
+                'harga_beli'=>$row['harga_beli']??0,'harga_jual'=>$row['harga_jual']??0,'stok'=>$row['stok']??0,'stok_minimal'=>$row['stok_minimal']??0,
+                'stok_maksimal'=>$row['stok_maksimal']??0,'rak_penyimpanan'=>$row['rak_penyimpanan']??null,'status_penjualan'=>$row['status_penjualan *']??'dijual','catatan'=>$row['catatan']??null,
+            ]));
         });
-
-        Storage::disk('local')->delete($path);
-
-        return redirect()
-            ->route('masterdata.masterproduk')
-            ->with('success', 'Produk berhasil diimport.');
+        Storage::disk('local')->delete($path); return redirect()->route('masterdata.masterproduk')->with('success','Produk berhasil diimport.');
     }
 
     public function exportEditTemplate()
     {
-        $produks = Produk::select([
-            'id',
-            'tipe_produk',
-            'nama_produk',
-            'nama_pabrik',
-            'sku',
-            'barcode',
-            'pajak',
-            'satuan_utama',
-            'harga_beli',
-            'harga_jual',
-            'stok_minimal',
-            'stok_maksimal',
-            'rak_penyimpanan',
-            'status_penjualan',
-            'catatan',
-        ])->get();
-
-        $fileName = 'edit_produk_' . now()->format('Ymd_His') . '.xlsx';
-        $filePath = storage_path('app/temp/' . $fileName);
-
-        if (!file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0777, true);
-        }
-
-        (new FastExcel($produks))->export($filePath);
-
-        return response()->download($filePath)->deleteFileAfterSend(true);
+        $produks=$this->firestore->all('produks')->map(fn($p)=>$p->toArray());
+        $filePath=storage_path('app/temp/edit_produk_'.now()->format('Ymd_His').'.xlsx'); if(!file_exists(dirname($filePath))) mkdir(dirname($filePath),0777,true);
+        (new FastExcel($produks))->export($filePath); return response()->download($filePath)->deleteFileAfterSend(true);
     }
 
     public function importUpdate(Request $request)
     {
-        $request->validate([
-            'file_edit_produk' => 'required|file|mimes:xlsx,xls|max:5120',
-        ]);
-
-        $fullPath = $request->file('file_edit_produk')->getRealPath();
-
-        (new FastExcel)->import($fullPath, function ($row) {
-            $id = $row['id'] ?? null;
-            $sku = $row['sku'] ?? null;
-
-            if (empty($id) && empty($sku)) {
-                return null;
-            }
-
-            $produk = null;
-
-            if (!empty($id)) {
-                $produk = Produk::find($id);
-            }
-
-            if (!$produk && !empty($sku)) {
-                $produk = Produk::where('sku', $sku)->first();
-            }
-
-            if (!$produk) {
-                return null;
-            }
-
-            $produk->update([
-                'tipe_produk'      => $row['tipe_produk'] ?? $produk->tipe_produk,
-                'nama_produk'      => $row['nama_produk'] ?? $produk->nama_produk,
-                'nama_pabrik'      => $row['nama_pabrik'] ?? $produk->nama_pabrik,
-                'sku'              => $row['sku'] ?? $produk->sku,
-                'barcode'          => $row['barcode'] ?? $produk->barcode,
-                'pajak'            => $row['pajak'] ?? $produk->pajak,
-                'satuan_utama'     => $row['satuan_utama'] ?? $produk->satuan_utama,
-                'harga_beli'       => is_numeric($row['harga_beli'] ?? null) ? $row['harga_beli'] : $produk->harga_beli,
-                'harga_jual'       => is_numeric($row['harga_jual'] ?? null) ? $row['harga_jual'] : $produk->harga_jual,
-                'stok_minimal'     => is_numeric($row['stok_minimal'] ?? null) ? $row['stok_minimal'] : $produk->stok_minimal,
-                'stok_maksimal'    => is_numeric($row['stok_maksimal'] ?? null) ? $row['stok_maksimal'] : $produk->stok_maksimal,
-                'rak_penyimpanan'  => $row['rak_penyimpanan'] ?? $produk->rak_penyimpanan,
-                'status_penjualan' => $row['status_penjualan'] ?? $produk->status_penjualan,
-                'catatan'          => $row['catatan'] ?? $produk->catatan,
-            ]);
-
-            return $produk; 
+        $request->validate(['file_edit_produk'=>'required|file|mimes:xlsx,xls|max:5120']);
+        (new FastExcel)->import($request->file('file_edit_produk')->getRealPath(),function($row){
+            $produk = !empty($row['id']??null) ? $this->firestore->find('produks',$row['id']) : null;
+            if(!$produk && !empty($row['sku']??null)) $produk=$this->firestore->firstWhere('produks','sku',$row['sku']);
+            if(!$produk) return null;
+            $data=$produk->toArray(); foreach($row as $k=>$v){ if($v!==null && $v!=='') $data[$k]=$v; }
+            $this->firestore->update('produks',$produk->id,$data); return null;
         });
-
-        return redirect()
-            ->route('masterdata.masterproduk')
-            ->with('success', 'Produk berhasil diperbarui secara massal.');
+        return redirect()->route('masterdata.masterproduk')->with('success','Produk berhasil diperbarui secara massal.');
     }
 
     public function downloadAllProduk()
     {
-        $produks = Produk::select([
-            'id',
-            'tipe_produk',
-            'nama_produk',
-            'nama_pabrik',
-            'sku',
-            'barcode',
-            'pajak',
-            'satuan_utama',
-            'harga_beli',
-            'harga_jual',
-            'stok_minimal',
-            'stok_maksimal',
-            'rak_penyimpanan',
-            'status_penjualan',
-            'catatan',
-            'created_at',
-            'updated_at',
-        ])->get()->map(function ($produk) {
-            return [
-                'ID' => $produk->id,
-                'Tipe Produk' => $produk->tipe_produk,
-                'Nama Produk' => $produk->nama_produk,
-                'Nama Pabrik' => $produk->nama_pabrik,
-                'SKU' => $produk->sku,
-                'Barcode' => $produk->barcode,
-                'Pajak' => $produk->pajak,
-                'Satuan Utama' => $produk->satuan_utama,
-                'Harga Beli' => $produk->harga_beli,
-                'Harga Jual' => $produk->harga_jual,
-                'Stok Minimal' => $produk->stok_minimal,
-                'Stok Maksimal' => $produk->stok_maksimal,
-                'Rak Penyimpanan' => $produk->rak_penyimpanan,
-                'Status Penjualan' => $produk->status_penjualan,
-                'Catatan' => $produk->catatan,
-                'Dibuat Pada' => optional($produk->created_at)->format('Y-m-d H:i:s'),
-                'Diubah Pada' => optional($produk->updated_at)->format('Y-m-d H:i:s'),
-            ];
-        });
-
-        $fileName = 'master_produk_' . now()->format('Ymd_His') . '.xlsx';
-        $tempDir = storage_path('app/temp');
-
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0777, true);
-        }
-
-        $filePath = $tempDir . DIRECTORY_SEPARATOR . $fileName;
-
-        (new FastExcel($produks))->export($filePath);
-
-        return response()->download($filePath)->deleteFileAfterSend(true);
+        $data=$this->firestore->all('produks')->map(fn($p)=>[
+            'ID'=>$p->id,'Tipe Produk'=>$p->tipe_produk,'Nama Produk'=>$p->nama_produk,'Nama Pabrik'=>$p->nama_pabrik,'SKU'=>$p->sku,
+            'Barcode'=>$p->barcode,'Pajak'=>$p->pajak,'Satuan Utama'=>$p->satuan_utama,'Harga Beli'=>$p->harga_beli,'Harga Jual'=>$p->harga_jual,
+            'Stok Minimal'=>$p->stok_minimal,'Stok Maksimal'=>$p->stok_maksimal,'Rak Penyimpanan'=>$p->rak_penyimpanan,'Status Penjualan'=>$p->status_penjualan,'Catatan'=>$p->catatan,
+            'Dibuat Pada'=>$p->created_at,'Diubah Pada'=>$p->updated_at,
+        ]);
+        $filePath=storage_path('app/temp/master_produk_'.now()->format('Ymd_His').'.xlsx'); if(!file_exists(dirname($filePath))) mkdir(dirname($filePath),0777,true);
+        (new FastExcel($data))->export($filePath); return response()->download($filePath)->deleteFileAfterSend(true);
     }
 }

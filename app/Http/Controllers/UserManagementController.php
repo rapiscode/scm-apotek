@@ -2,112 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\FirestoreService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class UserManagementController extends Controller
 {
+    protected array $roles = ['admin', 'user', 'kasir'];
+    public function __construct(protected FirestoreService $firestore) {}
+
     public function index(Request $request)
     {
-        $q = $request->query('q');
-        $role = $request->query('role');
-        $active = $request->query('active'); // "1" / "0" / null
-
-        $users = User::query()
-            ->when($q, fn($query) => $query->where(function ($w) use ($q) {
-                $w->where('name', 'like', "%{$q}%")
-                  ->orWhere('email', 'like', "%{$q}%");
-            }))
-            ->when($role, fn($query) => $query->where('role', $role))
-            ->when($active !== null && $active !== '', fn($query) => $query->where('is_active', (bool) $active))
-            ->orderByDesc('id')
-            ->paginate(10)
-            ->withQueryString();
-
-        $roles = ['admin', 'user', 'kasir']; // sesuaikan kebutuhan
-
-        return view('users.index', compact('users', 'roles', 'q', 'role', 'active'));
+        $q=$request->query('q'); $role=$request->query('role'); $active=$request->query('active');
+        $items=$this->firestore->all('users')
+            ->when($q, fn($c)=>$c->filter(fn($u)=>str_contains(strtolower($u->name.' '.$u->email), strtolower($q))))
+            ->when($role, fn($c)=>$c->where('role',$role))
+            ->when($active!==null && $active!=='', fn($c)=>$c->filter(fn($u)=>(bool)$u->is_active === (bool)$active))
+            ->values();
+        $page=LengthAwarePaginator::resolveCurrentPage(); $perPage=10;
+        $users=new LengthAwarePaginator($items->forPage($page,$perPage)->values(), $items->count(), $perPage, $page, ['path'=>$request->url(),'query'=>$request->query()]);
+        $roles=$this->roles;
+        return view('users.index', compact('users','roles','q','role','active'));
     }
-
-    public function create()
-    {
-        $roles = ['admin', 'user', 'kasir'];
-        return view('users.create', compact('roles'));
-    }
-
+    public function create(){ $roles=$this->roles; return view('users.create',compact('roles')); }
     public function store(Request $request)
     {
-        $roles = ['admin', 'user', 'kasir'];
-
-        $data = $request->validate([
-            'name' => ['required','string','max:255'],
-            'email' => ['required','email','max:255','unique:users,email'],
-            'password' => ['required','string','min:8'],
-            'role' => ['required', Rule::in($roles)],
-            'is_active' => ['nullable','boolean'],
-        ]);
-
-        $data['password'] = Hash::make($data['password']);
-        $data['is_active'] = $request->boolean('is_active');
-
-        User::create($data);
-
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
+        $data=$request->validate(['name'=>['required','string','max:255'],'email'=>['required','email','max:255'],'password'=>['required','string','min:8'],'role'=>['required',Rule::in($this->roles)],'is_active'=>['nullable','boolean']]);
+        try{ $record=$this->firestore->auth()->createUser(['displayName'=>$data['name'],'email'=>$data['email'],'password'=>$data['password'],'disabled'=>!$request->boolean('is_active')]); $this->firestore->create('users',['uid'=>$record->uid,'name'=>$data['name'],'email'=>$data['email'],'role'=>$data['role'],'is_active'=>$request->boolean('is_active')],$record->uid); return redirect()->route('users.index')->with('success','User berhasil dibuat.'); }catch(Throwable $e){ return back()->withErrors(['email'=>'Gagal membuat user: '.$e->getMessage()])->withInput(); }
     }
-
-    public function edit(User $user)
+    public function edit(string $user){ $user=$this->firestore->findOrFail('users',$user); $roles=$this->roles; return view('users.edit',compact('user','roles')); }
+    public function update(Request $request,string $user)
     {
-        $roles = ['admin', 'user', 'kasir'];
-        return view('users.edit', compact('user', 'roles'));
+        $existing=$this->firestore->findOrFail('users',$user);
+        $data=$request->validate(['name'=>['required','string','max:255'],'email'=>['required','email','max:255'],'password'=>['nullable','string','min:8'],'role'=>['required',Rule::in($this->roles)],'is_active'=>['nullable','boolean']]);
+        try{ $payload=['displayName'=>$data['name'],'email'=>$data['email'],'disabled'=>!$request->boolean('is_active')]; if(!empty($data['password'])) $payload['password']=$data['password']; $this->firestore->auth()->updateUser($existing->id,$payload); $this->firestore->update('users',$existing->id,['name'=>$data['name'],'email'=>$data['email'],'role'=>$data['role'],'is_active'=>$request->boolean('is_active')]); return redirect()->route('users.index')->with('success','User berhasil diupdate.'); }catch(Throwable $e){ return back()->withErrors(['email'=>'Gagal update user: '.$e->getMessage()])->withInput(); }
     }
-
-    public function update(Request $request, User $user)
+    public function toggle(string $user)
     {
-        $roles = ['admin', 'user', 'kasir'];
-
-        $data = $request->validate([
-            'name' => ['required','string','max:255'],
-            'email' => ['required','email','max:255', Rule::unique('users','email')->ignore($user->id)],
-            'password' => ['nullable','string','min:8'],
-            'role' => ['required', Rule::in($roles)],
-            'is_active' => ['nullable','boolean'],
-        ]);
-
-        if (!empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
-        }
-
-        $data['is_active'] = $request->boolean('is_active');
-
-        $user->update($data);
-
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate.');
+        if(session('firebase_user.uid')===$user) return back()->with('error','Tidak bisa menonaktifkan akun sendiri.');
+        $u=$this->firestore->findOrFail('users',$user); $new=!(bool)$u->is_active; if ($new) { $this->firestore->auth()->enableUser($u->id); } else { $this->firestore->auth()->disableUser($u->id); } $this->firestore->update('users',$u->id,['is_active'=>$new]); return back()->with('success','Status user berhasil diubah.');
     }
-
-    public function toggle(User $user)
+    public function destroy(string $user)
     {
-        // biar ga mematikan akun sendiri (opsional)
-        if (auth()->id() === $user->id) {
-            return back()->with('error', 'Tidak bisa menonaktifkan akun sendiri.');
-        }
-
-        $user->update(['is_active' => !$user->is_active]);
-
-        return back()->with('success', 'Status user berhasil diubah.');
-    }
-
-    public function destroy(User $user)
-    {
-        if (auth()->id() === $user->id) {
-            return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
-        }
-
-        $user->delete();
-
-        return back()->with('success', 'User berhasil dihapus.');
+        if(session('firebase_user.uid')===$user) return back()->with('error','Tidak bisa menghapus akun sendiri.');
+        try{ $this->firestore->auth()->deleteUser($user); }catch(Throwable $e){}
+        $this->firestore->delete('users',$user); return back()->with('success','User berhasil dihapus.');
     }
 }
