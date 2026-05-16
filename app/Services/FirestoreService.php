@@ -2,148 +2,303 @@
 
 namespace App\Services;
 
-use App\Support\FirestoreDocument;
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
+use Google\Auth\Credentials\ServiceAccountCredentials;
+use Illuminate\Support\Facades\Http;
+use Kreait\Firebase\Auth;
 use Kreait\Firebase\Factory;
-use RuntimeException;
+use Illuminate\Support\Collection;
+use Throwable;
 
 class FirestoreService
 {
-    protected mixed $database = null;
+    protected Auth $auth;
+    protected string $projectId;
+    protected string $credentialsPath;
+    protected string $baseUrl;
 
-    public function enabled(): bool
+    public function __construct()
     {
-        return filled(config('firebase.credentials')) && file_exists(config('firebase.credentials'));
+        $this->credentialsPath = base_path(env('FIREBASE_CREDENTIALS'));
+
+        if (! file_exists($this->credentialsPath)) {
+            throw new \Exception('File firebase_credentials.json tidak ditemukan di: ' . $this->credentialsPath);
+        }
+
+        $credentials = json_decode(file_get_contents($this->credentialsPath), true);
+
+        $this->projectId = env('FIREBASE_PROJECT_ID') ?: $credentials['project_id'];
+
+        $factory = (new Factory)
+            ->withServiceAccount($this->credentialsPath)
+            ->withProjectId($this->projectId);
+
+        $this->auth = $factory->createAuth();
+
+        $this->baseUrl = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents";
     }
 
-    public function db(): mixed
+    public function auth(): Auth
     {
-        if ($this->database) {
-            return $this->database;
-        }
-
-        if (! $this->enabled()) {
-            throw new RuntimeException('Firebase credentials belum ditemukan. Cek FIREBASE_CREDENTIALS di .env.');
-        }
-
-        $factory = (new Factory)->withServiceAccount(config('firebase.credentials'));
-
-        if (filled(config('firebase.project_id'))) {
-            $factory = $factory->withProjectId(config('firebase.project_id'));
-        }
-
-        return $this->database = $factory->createFirestore()->database();
+        return $this->auth;
     }
 
-    public function auth(): mixed
+    protected function token(): string
     {
-        if (! $this->enabled()) {
-            throw new RuntimeException('Firebase credentials belum ditemukan. Cek FIREBASE_CREDENTIALS di .env.');
+        $scopes = ['https://www.googleapis.com/auth/datastore'];
+
+        $credentials = new ServiceAccountCredentials($scopes, $this->credentialsPath);
+
+        $token = $credentials->fetchAuthToken();
+
+        if (! isset($token['access_token'])) {
+            throw new \Exception('Gagal mengambil access token Firebase.');
         }
 
-        $factory = (new Factory)->withServiceAccount(config('firebase.credentials'));
-
-        if (filled(config('firebase.project_id'))) {
-            $factory = $factory->withProjectId(config('firebase.project_id'));
-        }
-
-        return $factory->createAuth();
+        return $token['access_token'];
     }
 
-    public function all(string $collection, string $orderBy = 'created_at', string $direction = 'desc'): Collection
+    protected function headers(): array
     {
-        $rows = collect();
-
-        foreach ($this->db()->collection($collection)->documents() as $document) {
-            if ($document->exists()) {
-                $rows->push($this->makeDocument($document->id(), $document->data()));
-            }
-        }
-
-        return $rows->sortBy(function ($item) use ($orderBy) {
-            $value = $item->{$orderBy};
-            return $value instanceof \DateTimeInterface ? $value->getTimestamp() : (string) $value;
-        }, SORT_REGULAR, strtolower($direction) === 'desc')->values();
+        return [
+            'Authorization' => 'Bearer ' . $this->token(),
+            'Content-Type' => 'application/json',
+        ];
     }
 
-    public function find(string $collection, string|int|null $id): ?FirestoreDocument
+    protected function encodeValue($value): array
     {
-        if (blank($id)) {
+        if (is_null($value)) {
+            return ['nullValue' => null];
+        }
+
+        if (is_bool($value)) {
+            return ['booleanValue' => $value];
+        }
+
+        if (is_int($value)) {
+            return ['integerValue' => $value];
+        }
+
+        if (is_float($value)) {
+            return ['doubleValue' => $value];
+        }
+
+        if (is_array($value)) {
+            return [
+                'arrayValue' => [
+                    'values' => array_map(fn ($item) => $this->encodeValue($item), $value),
+                ],
+            ];
+        }
+
+        return ['stringValue' => (string) $value];
+    }
+
+    protected function encodeFields(array $data): array
+    {
+        $fields = [];
+
+        foreach ($data as $key => $value) {
+            $fields[$key] = $this->encodeValue($value);
+        }
+
+        return $fields;
+    }
+
+    protected function decodeValue(array $value)
+    {
+        if (array_key_exists('stringValue', $value)) {
+            return $value['stringValue'];
+        }
+
+        if (array_key_exists('integerValue', $value)) {
+            return (int) $value['integerValue'];
+        }
+
+        if (array_key_exists('doubleValue', $value)) {
+            return (float) $value['doubleValue'];
+        }
+
+        if (array_key_exists('booleanValue', $value)) {
+            return (bool) $value['booleanValue'];
+        }
+
+        if (array_key_exists('nullValue', $value)) {
             return null;
         }
 
-        $snapshot = $this->db()->collection($collection)->document((string) $id)->snapshot();
-
-        return $snapshot->exists() ? $this->makeDocument($snapshot->id(), $snapshot->data()) : null;
-    }
-
-    public function findOrFail(string $collection, string|int|null $id): FirestoreDocument
-    {
-        return $this->find($collection, $id) ?? abort(404, "Data {$collection} tidak ditemukan.");
-    }
-
-    public function create(string $collection, array $data, ?string $id = null): FirestoreDocument
-    {
-        $now = now()->toIso8601String();
-        $data = array_merge($data, [
-            'created_at' => $data['created_at'] ?? $now,
-            'updated_at' => $data['updated_at'] ?? $now,
-        ]);
-
-        if ($id !== null && $id !== '') {
-            $ref = $this->db()->collection($collection)->document((string) $id);
-            $data['id'] = (string) $id;
-            $ref->set($data, ['merge' => true]);
-            return new FirestoreDocument($data);
+        if (array_key_exists('timestampValue', $value)) {
+            return $value['timestampValue'];
         }
 
-        $ref = $this->db()->collection($collection)->newDocument();
-        $data['id'] = $ref->id();
-        $ref->set($data);
+        if (array_key_exists('arrayValue', $value)) {
+            $items = $value['arrayValue']['values'] ?? [];
 
-        return new FirestoreDocument($data);
+            return array_map(fn ($item) => $this->decodeValue($item), $items);
+        }
+
+        if (array_key_exists('mapValue', $value)) {
+            return $this->decodeFields($value['mapValue']['fields'] ?? []);
+        }
+
+        return null;
     }
 
-    public function update(string $collection, string|int $id, array $data): FirestoreDocument
+    protected function decodeFields(array $fields): object
     {
-        $data['id'] = (string) $id;
-        $data['updated_at'] = now()->toIso8601String();
+        $data = [];
 
-        $this->db()->collection($collection)->document((string) $id)->set($data, ['merge' => true]);
+        foreach ($fields as $key => $value) {
+            $data[$key] = $this->decodeValue($value);
+        }
 
-        return $this->findOrFail($collection, $id);
+        return (object) $data;
     }
 
-    public function delete(string $collection, string|int $id): void
+    public function create(string $collection, array $data, ?string $documentId = null): object
     {
-        $this->db()->collection($collection)->document((string) $id)->delete();
-    }
+        try {
+            $payload = [
+                'fields' => $this->encodeFields($data),
+            ];
 
-    public function firstWhere(string $collection, string $field, mixed $value): ?FirestoreDocument
-    {
-        return $this->all($collection)->first(fn ($item) => (string) ($item->{$field} ?? '') === (string) $value);
-    }
+            if ($documentId) {
+                $url = "{$this->baseUrl}/{$collection}/{$documentId}";
 
-    public function unique(string $collection, string $field, mixed $value, string|int|null $ignoreId = null): bool
-    {
-        return ! $this->all($collection)->contains(function ($item) use ($field, $value, $ignoreId) {
-            if ($ignoreId !== null && (string) $item->id === (string) $ignoreId) {
-                return false;
+                $response = Http::withHeaders($this->headers())
+                    ->patch($url, $payload);
+            } else {
+                $url = "{$this->baseUrl}/{$collection}";
+
+                $response = Http::withHeaders($this->headers())
+                    ->post($url, $payload);
             }
 
-            return strtolower((string) ($item->{$field} ?? '')) === strtolower((string) $value);
-        });
+            if ($response->failed()) {
+                throw new \Exception($response->body());
+            }
+
+            return (object) [
+                'id' => $documentId,
+                ...$data,
+            ];
+        } catch (Throwable $e) {
+            throw new \Exception('Gagal membuat data Firestore: ' . $e->getMessage());
+        }
     }
 
-    public function nextNumber(string $collection): int
+    public function find(string $collection, string $documentId): ?object
     {
-        return $this->all($collection)->count() + 1;
+        try {
+            $url = "{$this->baseUrl}/{$collection}/{$documentId}";
+
+            $response = Http::withHeaders($this->headers())
+                ->get($url);
+
+            if ($response->status() === 404) {
+                return null;
+            }
+
+            if ($response->failed()) {
+                throw new \Exception($response->body());
+            }
+
+            $json = $response->json();
+
+            $data = $this->decodeFields($json['fields'] ?? []);
+
+            $data->id = $documentId;
+
+            return $data;
+        } catch (Throwable $e) {
+            throw new \Exception('Gagal mengambil data Firestore: ' . $e->getMessage());
+        }
     }
 
-    public function makeDocument(string $id, array $data): FirestoreDocument
+    public function update(string $collection, string $documentId, array $data): bool
     {
-        $data['id'] = (string) ($data['id'] ?? $id);
-        return new FirestoreDocument($data);
+        try {
+            $url = "{$this->baseUrl}/{$collection}/{$documentId}";
+
+            $query = [];
+
+            foreach (array_keys($data) as $field) {
+                $query[] = 'updateMask.fieldPaths=' . urlencode($field);
+            }
+
+            $url .= '?' . implode('&', $query);
+
+            $payload = [
+                'fields' => $this->encodeFields($data),
+            ];
+
+            $response = Http::withHeaders($this->headers())
+                ->patch($url, $payload);
+
+            if ($response->failed()) {
+                throw new \Exception($response->body());
+            }
+
+            return true;
+        } catch (Throwable $e) {
+            throw new \Exception('Gagal update data Firestore: ' . $e->getMessage());
+        }
+    }
+
+    public function delete(string $collection, string $documentId): bool
+    {
+        try {
+            $url = "{$this->baseUrl}/{$collection}/{$documentId}";
+
+            $response = Http::withHeaders($this->headers())
+                ->delete($url);
+
+            if ($response->failed()) {
+                throw new \Exception($response->body());
+            }
+
+            return true;
+        } catch (Throwable $e) {
+            throw new \Exception('Gagal hapus data Firestore: ' . $e->getMessage());
+        }
+    }
+
+    public function all(string $collection): Collection
+    {
+        try {
+            $url = "{$this->baseUrl}/{$collection}";
+
+            $response = Http::withHeaders($this->headers())
+                ->get($url);
+
+            if ($response->status() === 404) {
+                return collect();
+            }
+
+            if ($response->failed()) {
+                throw new \Exception($response->body());
+            }
+
+            $json = $response->json();
+
+            $documents = $json['documents'] ?? [];
+
+            $data = collect();
+
+            foreach ($documents as $document) {
+                $fields = $document['fields'] ?? [];
+
+                $item = $this->decodeFields($fields);
+
+                $nameParts = explode('/', $document['name']);
+                $item->id = end($nameParts);
+
+                $data->push($item);
+            }
+
+            return $data;
+        } catch (Throwable $e) {
+            throw new \Exception('Gagal mengambil semua data Firestore: ' . $e->getMessage());
+        }
     }
 }

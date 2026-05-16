@@ -291,7 +291,7 @@
                     <div class="mb-4">
                         <input
                             type="text"
-                            name="name"
+                            name="fullname"
                             class="form-control custom-input"
                             placeholder="Full Name"
                             value="{{ old('name') }}"

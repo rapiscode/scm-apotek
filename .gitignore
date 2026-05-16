@@ -6,9 +6,17 @@
 /storage/*.key
 /storage/pail
 /vendor
+
 .env
 .env.backup
 .env.production
+
+# Firebase credentials
+/app/firebase/*.json
+/storage/app/firebase/*.json
+firebase_credentials.json
+*firebase-adminsdk*.json
+
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -16,6 +24,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+
 /.fleet
 /.idea
 /.nova

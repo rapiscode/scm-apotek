@@ -4,15 +4,64 @@ namespace App\Http\Controllers;
 
 use App\Services\FirestoreService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Throwable;
 
 class AuthController extends Controller
 {
-    public function __construct(protected FirestoreService $firestore) {}
+    public function __construct(
+        protected FirestoreService $firestore 
+    ) {}
 
-    public function showLogin()
+    public function showlogin()
     {
         return view('auth.login');
+    }
+
+    public function showRegister()
+    {
+        return view('auth.register');
+    }
+
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'fullname' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:6'],
+        ]);
+
+        try {
+            $userRecord = $this->firestore->auth()->createUser([
+                'displayName' => $validated['fullname'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'emailVerified' => false,
+                'disabled' => false,
+            ]);
+
+            $uid = $userRecord->uid;
+
+            $this->firestore->create('users', [
+                'id' => $uid,
+                'fullname' => $validated['fullname'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'user',
+                'is_active' => true,
+                'created_at' => now()->toDateTimeString(),
+                'updated_at' => now()->toDateTimeString(),
+            ], $uid);
+
+            return redirect()
+                ->route('login')
+                ->with('success', 'Registration successful. Please login.');
+
+        } catch (Throwable $e) {
+            return back()
+                ->withErrors(['email' => 'Gagal membuat akun: ' . $e->getMessage(),])
+                ->withInput();
+        }
     }
 
     public function login(Request $request)
@@ -33,13 +82,18 @@ class AuthController extends Controller
             $profile = $this->firestore->find('users', $uid);
 
             if ($profile && isset($profile->is_active) && ! (bool) $profile->is_active) {
-                return back()->withErrors(['email' => 'Akun kamu sedang nonaktif.'])->withInput();
+                return back()
+                    ->withErrors([
+                        'email' => 'Akun kamu sedang nonaktif.', 
+                    ])
+                    ->withInput();
             }
 
             $request->session()->regenerate();
+
             $request->session()->put('firebase_user', [
                 'uid' => $uid,
-                'name' => $profile->name ?? $firebaseUser->displayName ?? $credentials['email'],
+                'fullname' => $profile->fullname ?? $firebaseUser->displayName ?? $credentials['email'],
                 'email' => $profile->email ?? $firebaseUser->email ?? $credentials['email'],
                 'role' => $profile->role ?? 'user',
                 'is_active' => $profile->is_active ?? true,
@@ -47,47 +101,20 @@ class AuthController extends Controller
 
             return redirect()->route('dashboard');
         } catch (Throwable $e) {
-            return back()->withErrors(['email' => 'Email atau password salah.'])->withInput();
+            return back()
+                ->withErrors(['email' => 'Email atau password salah.' ,])
+                ->withInput();
         }
     }
 
     public function logout(Request $request)
     {
         $request->session()->forget('firebase_user');
+
         $request->session()->invalidate();
+
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
-    }
-
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
-
-        try {
-            $record = $this->firestore->auth()->createUser([
-                'displayName' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => $validated['password'],
-                'emailVerified' => false,
-                'disabled' => false,
-            ]);
-
-            $this->firestore->create('users', [
-                'uid' => $record->uid,
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'role' => 'user',
-                'is_active' => true,
-            ], $record->uid);
-
-            return redirect()->route('login')->with('success', 'Akun berhasil dibuat. Silakan login.');
-        } catch (Throwable $e) {
-            return back()->withErrors(['email' => 'Gagal membuat akun: ' . $e->getMessage()])->withInput();
-        }
     }
 }
